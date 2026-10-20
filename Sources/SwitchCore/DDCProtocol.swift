@@ -108,13 +108,20 @@ public final class DDCMonitorLink {
         if since < timing.commandGap { Thread.sleep(forTimeInterval: timing.commandGap - since) }
     }
 
+    /// MACH_SEND_INVALID_DEST: the IOAVService behind this link is gone (the display retrained its link,
+    /// which the G3223D does on every PiP change). Retrying the same handle can never succeed.
+    public static let serviceGone: Int32 = 0x1000_0003
+
     private func attempt<T>(_ what: String, _ body: () throws -> T) throws -> T {
         var last: Error = DDCError.timeout(what)
         var backoff = timing.commandGap
         for _ in 0..<max(1, timing.attempts) {
             pace()
             defer { lastCommand = Date() }
-            do { return try body() } catch { last = error; Thread.sleep(forTimeInterval: backoff); backoff = min(backoff * 2, 1.0) }
+            do { return try body() } catch {
+                if case DDCError.ioFailed(_, let rc) = error, rc == Self.serviceGone { throw error }   // fail fast; caller rediscovers
+                last = error; Thread.sleep(forTimeInterval: backoff); backoff = min(backoff * 2, 1.0)
+            }
         }
         throw last
     }

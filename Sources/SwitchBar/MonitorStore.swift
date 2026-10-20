@@ -145,15 +145,20 @@ final class MonitorStore {
                 var err: String?
                 do { try action(monitor) } catch let first {
                     NSLog("SwitchBar: action on %@ failed: %@", id, "\(first)")
+                    err = "\(first)"
                     if case DDCError.ioFailed = first {
-                        // The display reconfigured under us and the IOAVService is stale (MACH_SEND_INVALID_DEST):
-                        // rediscover inline and retry once on the fresh service.
-                        let fresh = self.discoverSync()
-                        DispatchQueue.main.async { self.states = fresh; self.onChange?() }
-                        if let again = fresh.first(where: { $0.id == id })?.monitor {
-                            do { try action(again); NSLog("SwitchBar: retry on fresh service succeeded") } catch { err = "retry: \(error)" }
-                        } else { err = "\(first) (monitor \(id) not found after rediscovery)" }
-                    } else { err = "\(first)" }
+                        // The display retrained its link and the IOAVService is gone (MACH_SEND_INVALID_DEST). The
+                        // monitor can be absent from the registry for a second or two: rediscover and retry, up to
+                        // three rounds a second apart.
+                        for round in 1...3 {
+                            Thread.sleep(forTimeInterval: round == 1 ? 0.3 : 1.0)
+                            let fresh = self.discoverSync()
+                            DispatchQueue.main.async { self.states = fresh; self.onChange?() }
+                            guard let again = fresh.first(where: { $0.id == id })?.monitor else { continue }
+                            do { try action(again); err = nil; NSLog("SwitchBar: retry %d on fresh service succeeded", round); break }
+                            catch { err = "retry \(round): \(error)"; if case DDCError.ioFailed = error { continue } else { break } }
+                        }
+                    }
                 }
                 DispatchQueue.main.async { completion?(err) }
                 self.refresh(only: id)

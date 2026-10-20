@@ -31,6 +31,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // FR9: the default hotkey is live on first launch (D9).
         hotKey = HotKey(spec: hotKeySpec) { [weak self] in self?.openSwitcher() }
         if hotKey == nil { NSLog("SwitchBar: hotkey \"%@\" could not be registered", hotKeySpec) }
+        // Screen changes (a monitor retraining its link, plug and unplug) → look again.
+        NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.store.scheduleRediscover()
+        }
         store.discover()
         rebuild()
     }
