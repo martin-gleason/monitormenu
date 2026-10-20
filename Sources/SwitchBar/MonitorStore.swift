@@ -41,8 +41,12 @@ final class MonitorStore {
         }, Unmanaged.passUnretained(self).toOpaque())
     }
 
+    /// Kicks a discovery unless one is already scheduled; used when an action finds the list empty.
+    func rescanIfIdle() { if !rediscoverPending { discover() } }
+
     func scheduleRediscover() {
         guard !rediscoverPending else { return }
+        NSLog("SwitchBar: screen change — rediscovery scheduled")
         rediscoverPending = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.rediscoverPending = false
@@ -135,7 +139,9 @@ final class MonitorStore {
     }
 
     /// Every action funnels through here: write on the queue, then re-read that monitor (FR8).
-    func perform(on id: String, _ action: @escaping (Monitor) throws -> Void, completion: ((String?) -> Void)? = nil) {
+    /// `retrainsLink`: input and PiP changes make the G3223D retrain its link a few seconds later, which
+    /// replaces its IOAVService; a rediscovery is scheduled so the next action does not pay for it.
+    func perform(on id: String, retrainsLink: Bool = false, _ action: @escaping (Monitor) throws -> Void, completion: ((String?) -> Void)? = nil) {
         onMain { [weak self] in
             guard let self else { return }
             guard let s = self.states.first(where: { $0.id == id }) else { completion?("monitor is gone"); return }
@@ -153,14 +159,17 @@ final class MonitorStore {
                         for round in 1...3 {
                             Thread.sleep(forTimeInterval: round == 1 ? 0.3 : 1.0)
                             let fresh = self.discoverSync()
-                            DispatchQueue.main.async { self.states = fresh; self.onChange?() }
+                            if !fresh.isEmpty { DispatchQueue.main.async { self.states = fresh; self.onChange?() } }
                             guard let again = fresh.first(where: { $0.id == id })?.monitor else { continue }
                             do { try action(again); err = nil; NSLog("SwitchBar: retry %d on fresh service succeeded", round); break }
                             catch { err = "retry \(round): \(error)"; if case DDCError.ioFailed = error { continue } else { break } }
                         }
                     }
                 }
-                DispatchQueue.main.async { completion?(err) }
+                DispatchQueue.main.async {
+                    completion?(err)
+                    if retrainsLink, err == nil { DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in self?.discover() } }
+                }
                 self.refresh(only: id)
             }
         }

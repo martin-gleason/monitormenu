@@ -26,7 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Actions.shared = Actions(store: store)
         Actions.shared.openSwitcher = { [weak self] in self?.openSwitcher() }
         switcher.onPick = { [weak self] id, code in
-            self?.store.perform(on: id, { try $0.setInput(code) }, completion: self?.report)
+            self?.store.perform(on: id, retrainsLink: true, { try $0.setInput(code) }, completion: self?.report)
         }
         // FR9: the default hotkey is live on first launch (D9).
         hotKey = HotKey(spec: hotKeySpec) { [weak self] in self?.openSwitcher() }
@@ -177,11 +177,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func pickInput(_ sender: NSMenuItem) {
         guard let a = sender.representedObject as? Action else { return }
-        store.perform(on: a.id, { try $0.setInput(a.code) }, completion: report)
+        store.perform(on: a.id, retrainsLink: true, { try $0.setInput(a.code) }, completion: report)
     }
     @objc private func pickPiP(_ sender: NSMenuItem) {
         guard let a = sender.representedObject as? Action else { return }
-        store.perform(on: a.id, { try $0.setPiPMode(a.code) }, completion: report)
+        store.perform(on: a.id, retrainsLink: true, { try $0.setPiPMode(a.code) }, completion: report)
     }
     @objc private func pickPiPSource(_ sender: NSMenuItem) {
         guard let a = sender.representedObject as? Action else { return }

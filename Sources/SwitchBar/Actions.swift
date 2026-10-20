@@ -24,17 +24,26 @@ final class Actions {
         }
     }
 
-    func resolve(_ selector: String?) throws -> MonitorState {
-        let states = store.states
+    /// Picks a monitor. If none is listed right now (a link retrain empties the list for a few seconds),
+    /// waits up to eight seconds for discovery before giving up.
+    func resolve(_ selector: String?) async throws -> MonitorState {
+        var states = store.states
+        if states.isEmpty {
+            store.rescanIfIdle()
+            for _ in 0..<16 where states.isEmpty {
+                try await Task.sleep(nanoseconds: 500_000_000)
+                states = store.states
+            }
+        }
         guard !states.isEmpty else { throw ActionError.noMonitor(nil) }
         guard let sel = selector?.trimmingCharacters(in: .whitespaces), !sel.isEmpty else { return states[0] }
         if let m = states.first(where: { $0.name.lowercased().contains(sel.lowercased()) || $0.id == sel || $0.displayID.map { "\($0)" == sel } == true }) { return m }
         throw ActionError.noMonitor(sel)
     }
 
-    private func run(_ id: String, _ body: @escaping (Monitor) throws -> Void) async throws {
+    private func run(_ id: String, retrainsLink: Bool = false, _ body: @escaping (Monitor) throws -> Void) async throws {
         try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
-            store.perform(on: id, body) { err in
+            store.perform(on: id, retrainsLink: retrainsLink, body) { err in
                 if let err { c.resume(throwing: ActionError.ddc(err)) } else { c.resume() }
             }
         }
@@ -43,21 +52,21 @@ final class Actions {
     @discardableResult
     func switchInput(_ text: String, monitor: String? = nil) async throws -> (monitor: String, input: String) {
         guard let code = VCP.inputCode(from: text) else { throw ActionError.unknownInput(text) }
-        let s = try resolve(monitor)
-        try await run(s.id) { try $0.setInput(code) }
+        let s = try await resolve(monitor)
+        try await run(s.id, retrainsLink: true) { try $0.setInput(code) }
         return (s.name, VCP.label(code: VCP.inputSource, value: code))
     }
 
     @discardableResult
     func setBrightness(_ value: Int, monitor: String? = nil) async throws -> String {
-        let s = try resolve(monitor)
+        let s = try await resolve(monitor)
         try await run(s.id) { try $0.setBrightness(UInt16(max(0, min(100, value)))) }
         return s.name
     }
 
     @discardableResult
     func setContrast(_ value: Int, monitor: String? = nil) async throws -> String {
-        let s = try resolve(monitor)
+        let s = try await resolve(monitor)
         try await run(s.id) { try $0.setContrast(UInt16(max(0, min(100, value)))) }
         return s.name
     }
@@ -65,23 +74,23 @@ final class Actions {
     /// Accepts off, small, large, split, or a hex/decimal code the monitor advertises.
     @discardableResult
     func setPiP(_ text: String, monitor: String? = nil) async throws -> (monitor: String, mode: String) {
-        let s = try resolve(monitor)
+        let s = try await resolve(monitor)
         guard let code = VCP.pipCode(from: text) else { throw ActionError.badValue(text) }
-        try await run(s.id) { try $0.setPiPMode(code) }
+        try await run(s.id, retrainsLink: true) { try $0.setPiPMode(code) }
         return (s.name, VCP.label(code: VCP.pipMode, value: code))
     }
 
     @discardableResult
     func setPiPSource(_ text: String, monitor: String? = nil) async throws -> String {
         guard let code = VCP.inputCode(from: text) else { throw ActionError.unknownInput(text) }
-        let s = try resolve(monitor)
+        let s = try await resolve(monitor)
         try await run(s.id) { try $0.setPiPSource(code) }
         return s.name
     }
 
     @discardableResult
     func sleep(monitor: String? = nil) async throws -> String {
-        let s = try resolve(monitor)
+        let s = try await resolve(monitor)
         let code: UInt8 = s.powerModes.contains(0x04) ? 0x04 : 0x05
         try await run(s.id) { try $0.setPower(code) }
         return s.name
