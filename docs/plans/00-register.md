@@ -1,6 +1,6 @@
 # Register — SwitchBar
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 19:55 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 20:30 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -24,6 +24,7 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | D8 | ratified | MVP | **Vision sentence rewritten by the owner 2026-10-19:** "Control your monitor from your desktop, menubar, or shortcut." Pasted into the spec by the agent on the owner's instruction. Replaces the agent-punctuated draft "SwitchBar allows fast, convenient switching of monitor inputs and functions right from the desktop, the menu bar, or a menu switcher." Adds FR9 (ships with a shortcut) and NFR8 (monitor neutral). |
 | D9 | proposed | MVP | **Built as written; the fallback was not needed** — `appintentsmetadataprocessor` runs from `scripts/build-app.sh` on the `.swiftconstvalues` this toolchain's SwiftPM emits, and `Metadata.appintents/extract.actionsdata` lists all six intents and the Siri phrases. "Shortcut" means four surfaces, all calling the same `SwitchCore` actions: a global hotkey (Carbon `RegisterEventHotKey`, default ⌃⌥⌘I, overridable in `UserDefaults`); App Intents with an `AppShortcutsProvider` so actions appear in the Shortcuts app and Siri with no setup; the `switchbar://` URL scheme for Alfred, Raycast and scripts; the `switchctl` binary. App Intents metadata in a SwiftPM-built bundle needs `appintentsmetadataprocessor` run from `scripts/build-app.sh`; if that cannot be made to work inside F1-T5, the fallback is a bundled signed `.shortcut` wrapping the URL scheme, recorded as its own `D<n>`. |
 | D10 | proposed | MVP | Monitor neutral (NFR8). The HP Omen the owner expects within 90 days of 2026-10-19 is the second test monitor; until it arrives, two-display matching is tested with a fixture, not hardware (`O10`). |
+| D11 | proposed | MVP | `switchctl` has no raw `set <code> <value>`; writes are limited to the spec's controls (input, brightness, contrast, power, PiP mode and source). Raw `get 0xNN` stays for diagnosis. Source: review K2. The volume round-trip used as write-path evidence on 2026-10-19 was made with the command before it was removed. |
 
 ## Risks (RR)
 
@@ -35,10 +36,10 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | RR4 | A wrong VCP write can put a monitor into an odd state (factory reset, locked OSD). | open | Low with D3 | Monitor needs manual recovery | D3 whitelist + M1 mutation test. | agent |
 | RR5 | Meaning of the G3223D's ten PIP/PBP values (VCP 0xE9) is not documented anywhere the agent could find. | open | Certain | PIP menu labels could be wrong | Hands-on mapping session with the owner at the monitor (`O5`); unmapped values shown as hex. | human |
 
-| RR6 | The G3223D reports brightness 0/100 and contrast 100/100 and refuses writes to both, while every other code reads correctly and volume round-trips. Between BetterDisplay's 17:19 scan (56/75) and 18:10 the Dell preset code 0xF0 moved 0x0F → 0x34 and 0xE2 0x20 → 0x27, and 0xF0 refuses a write back. Looks like the monitor entered an HDR or locked preset while BetterDisplay was running. | open | Observed 2026-10-19 | FR3 cannot be verified live until the monitor is out of that state | Owner looks at the OSD (`O11`); the app shows brightness as "—" when the monitor reports max-locked values rather than pretending. | human |
+| RR6 | The G3223D reports brightness 0/100 and contrast 100/100 and refuses writes to both, while every other code reads correctly and volume round-trips. Between BetterDisplay's 17:19 scan (56/75) and 18:10 the Dell preset code 0xF0 moved 0x0F → 0x34 and 0xE2 0x20 → 0x27, and 0xF0 refuses a write back. Looks like the monitor entered an HDR or locked preset while BetterDisplay was running. | resolved 2026-10-19 — brightness 56/100, contrast 75/100, input HDMI 1 and 0xF0 = 0x0F all came back by 20:00, after the agent's first PiP on/off cycle through the app; cause not proven (RR6 note in `O11`) | Observed 2026-10-19 | FR3 could not be verified live for two hours | If it recurs: a PiP on/off cycle, or the OSD. | human |
 | RR7 | Input switching cannot be verified by the agent alone: switching the monitor away from the Mac's input may leave it on a source with no signal (RR3), and only a person at the desk can switch back if DDC stops answering. | open | Certain | FR2 live check waits on the owner | `O12`: the owner runs the first switch with a second source attached and the monitor's buttons within reach. | human |
 | RR8 | `switchctl` and the app share one I2C bus. Both transacting at the same instant corrupts one side's read (observed: `switchctl` got null messages while the app handled a URL). | open | Low in normal use | A CLI read fails or needs a retry | Five attempts with a doubling pause (F1-T5); README documents it. A single broker process is a future `D<n>` if it bites. | agent |
-| RR9 | A PiP or input change makes macOS reconfigure the display; the monitor answers DDC with null messages for up to a second and the app's rediscovery ran in that window, dropping the monitor for good. | resolved 2026-10-19 — the store keeps capabilities by serial across rediscovery, retries capabilities on refresh, and re-runs an empty discovery three times; verified by `switchbar://pip/small` then `switchbar://pip/off` with both logged and the state read back Off | Certain per change | The menu showed "No DDC-capable monitor" after the first action | as stated | agent |
+| RR9 | A PiP or input change makes the G3223D retrain its link a few seconds later: it leaves CoreGraphics, sometimes the IORegistry for several seconds, and the `IOAVService` handle dies (`MACH_SEND_INVALID_DEST`). The first build dropped the monitor for good; the next action after any such change fails on the stale handle. | resolved 2026-10-19 — capabilities cached by serial; fail fast on the dead handle; rediscover and retry up to three rounds; actions wait up to 8 s for a monitor; rediscovery pre-scheduled after input and PiP actions. Two full on/off cycles at 20:23 landed every action, each after one retry round. Cost: 3–8 s latency on the action after a PiP or input change. | Certain per change | Action after a PiP or input change fails or is slow | A broker that holds no long-lived handle (re-create the service per transaction) is the next step if the latency annoys (`A1`) | agent |
 
 ## Owner items (O)
 
@@ -56,7 +57,7 @@ Outstanding items only the owner can close.
 | O8 | Gate C1 and F1: the yes that opens the build. | P0 | closed 2026-10-19 — owner: "Go ahead with a monitor neutral native swift app" |
 | O9 | With the installed app launched once, open the Shortcuts app and confirm SwitchBar's actions are listed; then ask Siri to run one. Only the owner can speak to Siri. Closes the live half of FR9. | P1 | open |
 | O10 | When the HP Omen arrives, connect both monitors and run the live check; paste `switchctl list`. Closes two-display matching (D10). | P2 | open |
-| O11 | Look at the Dell's on-screen menu: is Brightness greyed out, and is Smart HDR or a game preset on? Brightness reads 0 and refuses writes over DDC since about 18:00 on 2026-10-19 (RR6). Turning HDR or the preset off from the buttons should bring 56/75 back; then `switchctl get brightness` closes this. | P1 | open |
+| O11 | Look at the Dell's on-screen menu: is Brightness greyed out, and is Smart HDR or a game preset on? Brightness reads 0 and refuses writes over DDC since about 18:00 on 2026-10-19 (RR6). | P1 | closed 2026-10-19 — resolved itself by 20:00 (56/75 back). One question remains for the owner: did you touch the monitor's buttons or see the screen go blank between 19:45 and 20:00? If not, the agent's PiP cycle cleared it. |
 | O12 | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input button is), then pick that input from the SwitchBar menu and switch back from the other side or the buttons. Closes FR2 live and answers RR3. | P1 | open |
 
 ## Agent items (A)
@@ -65,6 +66,8 @@ Outstanding items only the agent can close: defects in its own work, findings it
 
 | ID | Item | P | Status |
 |---|---|---|---|
+| A1 | Re-create the `IOAVService` per transaction instead of holding one, so a link retrain never leaves a dead handle and the action after a PiP or input change stops paying 3–8 s of retries (RR9). Measure first: does `IOAVServiceCreateWithService` per call cost more than the retry? | P2 | open |
+| A2 | Second adversarial pass over the post-review fixes (`docs/reviews/F1.md` § Not re-reviewed). | P1 | open |
 
 ## Chores (C)
 
@@ -89,7 +92,7 @@ Deterministic enforcement. Prose is advisory; hooks are not. An `H<n>` is a plan
 |---|---|---|---|---|
 | H1 | `swift test` passes | pre-commit + CI | the test gate | built — pre-commit runs it on every commit (C1-T3); CI waits on `O7` (C1-T6) |
 | H2 | Assertion count not below `Tests/ASSERTION_FLOOR` | pre-commit + CI | a suite that silently shrank | built — refused a floor of 17 against 16 on 2026-10-19 (C1-T3) |
-| H3 | No register ID in a commit, branch or PR title | commit-msg | the two-tier grammar | built — refused `fix(F1): closes D1 and RR2` on 2026-10-19 (C1-T3) |
+| H3 | No register ID in a commit message, branch or PR title | commit-msg | the two-tier grammar | built — refused `fix(F1): closes D1 and RR2` (subject) and `Closes D1, RR2 and O5.` (body) on 2026-10-19; types limited to the conventions' seven (C1-T3, review X2) |
 | H4 | Harness declared and its commands run | upstream `check_harness.py --run` | an undeclared or dead harness | built — reports `ok switchbar` 2026-10-19 (C1-T5) |
 | H5 | Every FR has a test or a named manual check with evidence | plan review checklist | drift, both directions | open (manual checklist, no mechanism) |
 | H6 | Nothing outside the capabilities whitelist is ever written | `swift test` (M1, M4) | the monitor, from a bad write | built — M1 and M4 killed 2026-10-19 (F1-T1) |
@@ -105,3 +108,5 @@ Named ways to break the code, each paired with the test that must catch it. A te
 | M2 | `Sources/SwitchCore/Capabilities.swift` | Mis-parse nested parentheses in the capabilities string (`vcp(... 60(1B 0F 11 12) ...)`) | `CapabilitiesTests.testParsesG3223DFixture` | killed 2026-10-19: 5 failures / 1 test (`scripts/mutate.sh M2`) |
 | M3 | `Sources/SwitchCore/DDCProtocol.swift` | Read the current value from bytes 6–7 of the reply (the maximum) instead of 8–9 | `DDCFrameTests.testCurrentInputIsLowByte` | killed 2026-10-19: 2 failures / 1 test (`scripts/mutate.sh M3`) |
 | M4 | `Sources/SwitchCore/Monitor.swift` | Let a factory-reset code (0x04, 0x05, 0x08) through when the monitor advertises it | `WhitelistTests.testFactoryResetCodesAreNeverOffered` | killed 2026-10-19: 4 failures / 1 test (`scripts/mutate.sh M4`) |
+| M5 | `Sources/SwitchCore/DDCProtocol.swift` | Skip the reply checksum (a flipped byte becomes a value) | `DDCFrameTests.testChecksumMismatchIsRejected` | killed 2026-10-19: 2 failures / 1 test (`scripts/mutate.sh M5`) |
+| M6 | `Sources/SwitchCore/I2CChannel.swift` | Wait forever for the I2C call instead of the deadline | `DDCFrameTests.testDeadlineChannelTimesOut` | killed 2026-10-19: 2 failures / 1 test (`scripts/mutate.sh M6`) |

@@ -17,7 +17,7 @@ Named, never numbered (`D2`). **No source read here marks a milestone as the cur
 
 | Milestone | Decisions landing here | Units |
 |---|---|---|
-| MVP | 10 | C1, F1 |
+| MVP | 11 | C1, F1 |
 
 ## Features and chores
 
@@ -26,7 +26,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 | ID | Kind | Status | Milestone | P | Owner | Plan | Tasks |
 |---|---|---|---|---|---|---|---|
 | C1 | chore | in progress (gate crossed 2026-10-19) — T1–T5 done 2026-10-19, T6 waits on `O7` | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
-| F1 | feature | built 2026-10-19; live checks that need a person at the desk remain open (`O9`, `O11`, `O12`); adversarial review pending | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
+| F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass owed (`A2`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
 
 ## Registers
 
@@ -34,12 +34,12 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
-| Decisions (`D`) | 10 | 9 | 0 | 1 |
-| Risks (`RR`) | 9 | 7 | 0 | 2 |
-| Owner items (`O`) | 12 | 9 | 0 | 3 |
-| Agent items (`A`) | 0 | 0 | 0 | 0 |
+| Decisions (`D`) | 11 | 10 | 0 | 1 |
+| Risks (`RR`) | 9 | 6 | 0 | 3 |
+| Owner items (`O`) | 12 | 8 | 0 | 4 |
+| Agent items (`A`) | 2 | 2 | 0 | 0 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
-| Mutations (`M`) | 4 | 0 | 0 | 4 |
+| Mutations (`M`) | 6 | 0 | 0 | 6 |
 | Chores (`C`) | 1 | 1 | 0 | 0 |
 | Gates (`G`) | 2 | 0 | 0 | 2 |
 
@@ -47,15 +47,16 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Status | Count |
 |---|---|---|
-| `D` | proposed | 9 |
+| `D` | proposed | 10 |
 | `D` | ratified | 1 |
-| `RR` | open | 7 |
-| `RR` | resolved | 2 |
-| `O` | closed | 3 |
-| `O` | open | 9 |
+| `RR` | open | 6 |
+| `RR` | resolved | 3 |
+| `O` | closed | 4 |
+| `O` | open | 8 |
+| `A` | open | 2 |
 | `H` | built | 6 |
 | `H` | open | 1 |
-| `M` | killed | 4 |
+| `M` | killed | 6 |
 | `C` | open | 1 |
 | `G` | done | 2 |
 
@@ -67,7 +68,7 @@ Counted from the register itself. A register with no rows still gets a line.
 |---|---|---|---|---|
 | H1 | swift test passes | pre-commit + CI | the test gate | built |
 | H2 | Assertion count not below Tests/ASSERTIONFLOOR | pre-commit + CI | a suite that silently shrank | built |
-| H3 | No register ID in a commit, branch or PR title | commit-msg | the two-tier grammar | built |
+| H3 | No register ID in a commit message, branch or PR title | commit-msg | the two-tier grammar | built |
 | H4 | Harness declared and its commands run | upstream `check_harness.py --run` | an undeclared or dead harness | built |
 | H5 | Every FR has a test or a named manual check with evidence | plan review checklist | drift, both directions | open |
 | H6 | Nothing outside the capabilities whitelist is ever written | `swift test` (M1, M4) | the monitor, from a bad write | built |
@@ -85,7 +86,6 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | agent | RR8 | — | open | switchctl and the app share one I2C bus. Both transacting at the same instant corrupts one side's read (observed: switch… |
 | human | RR3 | — | open | After switching the monitor to another input, the Mac may lose the DDC channel (some monitors stop answering I2C on an i… |
 | human | RR5 | — | open | Meaning of the G3223D's ten PIP/PBP values (VCP 0xE9) is not documented anywhere the agent could find. |
-| human | RR6 | — | open | The G3223D reports brightness 0/100 and contrast 100/100 and refuses writes to both, while every other code reads correc… |
 | human | RR7 | — | open | Input switching cannot be verified by the agent alone: switching the monitor away from the Mac's input may leave it on a… |
 | owner | D1 | — | proposed | DDC/CI is spoken directly over IOKit's IOAVService I2C interface on Apple silicon, the same path m1ddc and MonitorContro… |
 | owner | D2 | — | proposed | Layout mirrors HueBar and DockWatch: SwitchCore library (no AppKit, fully testable) + thin SwitchBar AppKit executable +… |
@@ -96,6 +96,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D7 | — | proposed | Prior art reviewed 2026-10-19 (docs/learnings/2026-10-19-prior-art.md). SwitchBar's uncovered ground is PiP/PbP from the… |
 | owner | D9 | — | proposed | Built as written; the fallback was not needed — appintentsmetadataprocessor runs from scripts/build-app.sh on the .swift… |
 | owner | D10 | — | proposed | Monitor neutral (NFR8). The HP Omen the owner expects within 90 days of 2026-10-19 is the second test monitor; until it … |
+| owner | D11 | — | proposed | switchctl has no raw set <code> <value>; writes are limited to the spec's controls (input, brightness, contrast, power, … |
 | owner | O2 | P1 | open | Lock the learning level. Agent proposes 5% (Swift is not in the owner's language set; same as HueBar and DockWatch). |
 | owner | O4 | P2 | open | Confirm the name SwitchBar or pick another (D5). |
 | owner | O5 | P1 | open | Sit at the G3223D for ten minutes while the agent steps through the 0xE9 values and say what each one shows. Closes RR5.… |
@@ -103,10 +104,11 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | O7 | P2 | open | Create the GitHub repository and say whether it is public or private. C1-T6 waits on it. |
 | owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm SwitchBar's actions are listed; then ask Siri t… |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
-| owner | O11 | P1 | open | Look at the Dell's on-screen menu: is Brightness greyed out, and is Smart HDR or a game preset on? Brightness reads 0 an… |
 | owner | O12 | P1 | open | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
+| unassigned | A1 | P2 | open | Re-create the IOAVService per transaction instead of holding one, so a link retrain never leaves a dead handle and the a… |
+| unassigned | A2 | P1 | open | Second adversarial pass over the post-review fixes (docs/reviews/F1.md § Not re-reviewed). |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
 
 ---
 
-27 open register rows.
+28 open register rows.
