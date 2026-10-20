@@ -1,2 +1,8 @@
-import SwitchCore
-print("SwitchBar \(SwitchCore.version) — menu bar app lands in F1-T2")
+import AppKit
+
+// SwitchBar — the menu bar app. Thin: builds menus from SwitchCore state and forwards clicks.
+let app = NSApplication.shared
+let delegate = AppDelegate()
+app.delegate = delegate
+app.setActivationPolicy(.accessory)
+app.run()
