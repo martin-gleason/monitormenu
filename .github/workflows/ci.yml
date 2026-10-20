@@ -1,0 +1,31 @@
+# C1-T6 — the test gate (H1) and the floor (H2) in CI. The status-page check needs the upstream
+# generator and stays local (pre-commit). The ruleset on main requires this job's "test" check.
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Secret scan (whole tree)
+        run: |
+          ! git grep -n -I -iE '(api[_-]?key|secret|password|passwd|token|authorization)["'"'"']?\s*[:=]\s*["'"'"']?[A-Za-z0-9/+_.=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{20,}\b|\bsk-[A-Za-z0-9]{20,}\b|\bxox[baprs]-[A-Za-z0-9-]{10,}\b' -- . ':!.github/workflows/ci.yml' ':!.githooks/pre-commit'
+      - name: Toolchain
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test 2>&1 | tee test.log; grep -E "Executed [0-9]+ tests?, with [0-9]+ tests? skipped and 0 failures|Executed [0-9]+ tests?, with 0 failures" test.log
+      - name: Assertion floor
+        run: |
+          n=$(grep -E "Executed [0-9]+ tests?" test.log | tail -1 | sed -E 's/.*Executed ([0-9]+) tests?.*/\1/')
+          floor=$(tr -d '[:space:]' < Tests/ASSERTION_FLOOR)
+          echo "executed=$n floor=$floor"
+          test "$n" -ge "$floor"
+      - name: MonitorCore has no AppKit
+        run: '! grep -rn "import AppKit" Sources/MonitorCore'

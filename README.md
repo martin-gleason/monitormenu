@@ -1,6 +1,8 @@
 # MonitorMenu
 
-Control your monitor from your desktop, menubar, or shortcut.
+[![ci](https://github.com/martin-gleason/monitormenu/actions/workflows/ci.yml/badge.svg)](https://github.com/martin-gleason/monitormenu/actions/workflows/ci.yml)
+
+**Control your monitor from your desktop, menubar, or shortcut.**
 
 A native Mac menu bar app that talks DDC/CI to your external monitors directly: switch inputs, set brightness and contrast, turn picture-in-picture on, put the panel to sleep. No helper apps. Apple silicon, macOS 14 or later.
 
