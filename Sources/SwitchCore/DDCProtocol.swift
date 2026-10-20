@@ -1,0 +1,140 @@
+import Foundation
+
+/// Pure DDC/CI framing (MCCS 2.x). No I/O here, so every byte is testable (M3).
+public enum DDCFrame {
+    static let hostAddress: UInt8 = 0x6E   // 0x37 << 1, the monitor as seen by the host
+    static let hostSource: UInt8 = 0x51     // sub-address the host writes from
+
+    /// Checksum over the virtual host address, the sub-address and the frame body.
+    static func checksum(_ body: [UInt8]) -> UInt8 {
+        body.reduce(hostAddress ^ hostSource) { $0 ^ $1 }
+    }
+
+    /// Frame = [0x80 | len, payload..., checksum]. The 0x51 sub-address is sent by the channel.
+    static func frame(_ payload: [UInt8]) -> [UInt8] {
+        let body = [0x80 | UInt8(payload.count)] + payload
+        return body + [checksum(body)]
+    }
+
+    public static func getVCP(_ code: UInt8) -> [UInt8] { frame([0x01, code]) }
+    public static func setVCP(_ code: UInt8, _ value: UInt16) -> [UInt8] {
+        frame([0x03, code, UInt8(value >> 8), UInt8(value & 0xFF)])
+    }
+    public static func capabilitiesRequest(offset: UInt16) -> [UInt8] {
+        frame([0xF3, UInt8(offset >> 8), UInt8(offset & 0xFF)])
+    }
+
+    public struct VCPReply: Equatable {
+        public let code: UInt8
+        public let current: UInt16
+        public let maximum: UInt16
+        public let supported: Bool
+    }
+
+    /// Reply = [0x6E, 0x88, 0x02, result, code, type, maxHi, maxLo, curHi, curLo, chk].
+    /// The current value is the low word at 8–9; the input code is its low byte (M3).
+    public static func parseVCPReply(_ r: [UInt8], expecting code: UInt8) throws -> VCPReply {
+        guard r.count >= 11 else { throw DDCError.badReply("short VCP reply (\(r.count) bytes)") }
+        guard r[2] == 0x02 else { throw DDCError.badReply(String(format: "opcode 0x%02X, expected 0x02", r[2])) }
+        guard r[4] == code else { throw DDCError.badReply(String(format: "reply for 0x%02X, asked 0x%02X", r[4], code)) }
+        let supported = r[3] == 0x00
+        let maximum = UInt16(r[6]) << 8 | UInt16(r[7])
+        let current = UInt16(r[8]) << 8 | UInt16(r[9])
+        return VCPReply(code: code, current: current, maximum: maximum, supported: supported)
+    }
+
+    /// Reply = [0x6E, 0x80|len, 0xE3, offHi, offLo, fragment..., chk]. Empty fragment ends the string.
+    public static func parseCapabilitiesReply(_ r: [UInt8], expectingOffset off: UInt16) throws -> [UInt8] {
+        guard r.count >= 6 else { throw DDCError.badReply("short capabilities reply") }
+        guard r[2] == 0xE3 else { throw DDCError.badReply(String(format: "opcode 0x%02X, expected 0xE3", r[2])) }
+        let len = Int(r[1] & 0x7F)
+        guard len >= 3 else { throw DDCError.badReply("capabilities length \(len)") }
+        let got = UInt16(r[3]) << 8 | UInt16(r[4])
+        guard got == off else { throw DDCError.badReply("capabilities offset \(got), asked \(off)") }
+        let end = min(2 + len, r.count)
+        return Array(r[5..<end])
+    }
+}
+
+/// Timing from the DDC/CI spec: 40 ms minimum between a request and its reply, 50 ms between commands.
+public struct DDCTiming {
+    public var replyDelay: TimeInterval = 0.05
+    public var commandGap: TimeInterval = 0.05
+    public var attempts = 3
+    public init() {}
+}
+
+/// One monitor's DDC conversation, serialized on its own queue (NFR4: the caller never blocks the UI
+/// if it calls from a background context; the menu layer wraps these in async calls).
+public final class DDCMonitorLink {
+    let channel: I2CChannel
+    public var timing = DDCTiming()
+    private let queue: DispatchQueue
+    private var lastCommand = Date.distantPast
+
+    public init(channel: I2CChannel, label: String) {
+        self.channel = channel
+        self.queue = DispatchQueue(label: "dev.marty.SwitchBar.ddc.\(label)")
+        let env = ProcessInfo.processInfo.environment
+        if let ms = Double(env["SWITCHBAR_REPLY_DELAY_MS"] ?? "") { timing.replyDelay = ms / 1000 }
+        if let ms = Double(env["SWITCHBAR_GAP_MS"] ?? "") { timing.commandGap = ms / 1000 }
+    }
+
+    private func pace() {
+        let since = Date().timeIntervalSince(lastCommand)
+        if since < timing.commandGap { Thread.sleep(forTimeInterval: timing.commandGap - since) }
+    }
+
+    private func attempt<T>(_ what: String, _ body: () throws -> T) throws -> T {
+        var last: Error = DDCError.timeout(what)
+        for _ in 0..<max(1, timing.attempts) {
+            pace()
+            defer { lastCommand = Date() }
+            do { return try body() } catch { last = error; Thread.sleep(forTimeInterval: timing.commandGap) }
+        }
+        throw last
+    }
+
+    public func read(_ code: UInt8) throws -> DDCFrame.VCPReply {
+        try queue.sync {
+            try attempt(String(format: "get VCP 0x%02X", code)) {
+                try channel.write(DDCFrame.getVCP(code))
+                Thread.sleep(forTimeInterval: timing.replyDelay)
+                let env = ProcessInfo.processInfo.environment
+                let reply = try channel.read(count: Int(env["SWITCHBAR_READ_LEN"] ?? "") ?? 11)
+                if env["SWITCHBAR_DEBUG"] != nil {
+                    FileHandle.standardError.write(Data((String(format: "ddc get 0x%02X ← ", code) + reply.map { String(format: "%02X", $0) }.joined(separator: " ") + "\n").utf8))
+                }
+                return try DDCFrame.parseVCPReply(reply, expecting: code)
+            }
+        }
+    }
+
+    /// Unchecked write. Callers go through `Monitor.set`, which enforces the whitelist (D3).
+    func writeUnchecked(_ code: UInt8, _ value: UInt16) throws {
+        try queue.sync {
+            try attempt(String(format: "set VCP 0x%02X", code)) {
+                try channel.write(DDCFrame.setVCP(code, value))
+            }
+        }
+    }
+
+    public func capabilitiesString() throws -> String {
+        try queue.sync {
+            var out: [UInt8] = []
+            var offset: UInt16 = 0
+            while true {
+                let frag: [UInt8] = try attempt("capabilities at \(offset)") {
+                    try channel.write(DDCFrame.capabilitiesRequest(offset: offset))
+                    Thread.sleep(forTimeInterval: timing.replyDelay)
+                    return try DDCFrame.parseCapabilitiesReply(try channel.read(count: 38), expectingOffset: offset)
+                }
+                if frag.isEmpty { break }
+                out += frag
+                offset += UInt16(frag.count)
+                if out.count > 4096 { throw DDCError.badReply("capabilities string over 4 KB") }
+            }
+            return String(decoding: out, as: UTF8.self)
+        }
+    }
+}

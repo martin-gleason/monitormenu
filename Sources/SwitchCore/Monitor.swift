@@ -1,0 +1,64 @@
+import Foundation
+import CoreGraphics
+
+/// Identity read from the IORegistry display node and matched to a CoreGraphics display.
+public struct MonitorIdentity: Equatable, Codable {
+    public var name: String
+    public var vendor: UInt32
+    public var model: UInt32
+    public var serial: UInt32
+    public var alphanumericSerial: String?
+    public var displayID: CGDirectDisplayID?
+    public init(name: String, vendor: UInt32, model: UInt32, serial: UInt32, alphanumericSerial: String? = nil, displayID: CGDirectDisplayID? = nil) {
+        self.name = name; self.vendor = vendor; self.model = model; self.serial = serial
+        self.alphanumericSerial = alphanumericSerial; self.displayID = displayID
+    }
+}
+
+/// One external monitor with a DDC channel and the whitelist read from it.
+public final class Monitor {
+    public let identity: MonitorIdentity
+    public let link: DDCMonitorLink
+    public private(set) var capabilities: Capabilities?
+
+    public init(identity: MonitorIdentity, link: DDCMonitorLink, capabilities: Capabilities? = nil) {
+        self.identity = identity; self.link = link; self.capabilities = capabilities
+    }
+
+    public var name: String { identity.name }
+
+    /// Reads the capabilities string from the monitor. Required before any write (D3).
+    @discardableResult
+    public func loadCapabilities() throws -> Capabilities {
+        let caps = Capabilities.parse(try link.capabilitiesString())
+        capabilities = caps
+        return caps
+    }
+
+    public func get(_ code: UInt8) throws -> DDCFrame.VCPReply { try link.read(code) }
+
+    /// The only write path. Refuses anything the monitor did not advertise (NFR5, M1, M4).
+    public func set(_ code: UInt8, _ value: UInt16) throws {
+        if VCP.factoryResets.contains(code) { throw DDCError.refusedFactoryReset(code: code) }
+        guard let caps = capabilities, caps.advertises(code) else { throw DDCError.notAdvertised(code: code) }
+        if let allowed = caps.values(for: code), !allowed.isEmpty {
+            guard value <= 0xFF, allowed.contains(UInt8(value)) else { throw DDCError.valueNotAdvertised(code: code, value: value) }
+        }
+        try link.writeUnchecked(code, value)
+    }
+
+    // Convenience, all funnelled through `set`.
+    public func inputs() -> [UInt8] { capabilities?.values(for: VCP.inputSource) ?? [] }
+    public func currentInput() throws -> UInt8 { UInt8(try get(VCP.inputSource).current & 0xFF) }
+    public func setInput(_ code: UInt8) throws { try set(VCP.inputSource, UInt16(code)) }
+    public func brightness() throws -> (current: UInt16, max: UInt16) { let r = try get(VCP.brightness); return (r.current, r.maximum) }
+    public func setBrightness(_ v: UInt16) throws { try set(VCP.brightness, v) }
+    public func contrast() throws -> (current: UInt16, max: UInt16) { let r = try get(VCP.contrast); return (r.current, r.maximum) }
+    public func setContrast(_ v: UInt16) throws { try set(VCP.contrast, v) }
+    public func powerModes() -> [UInt8] { capabilities?.values(for: VCP.powerMode) ?? [] }
+    public func setPower(_ v: UInt8) throws { try set(VCP.powerMode, UInt16(v)) }
+    public var hasPiP: Bool { capabilities?.advertises(VCP.pipMode) ?? false }
+    public func pipModes() -> [UInt8] { capabilities?.values(for: VCP.pipMode) ?? [] }
+    public func setPiPMode(_ v: UInt8) throws { try set(VCP.pipMode, UInt16(v)) }
+    public func setPiPSource(_ input: UInt8) throws { try set(VCP.pipSource, UInt16(input)) }
+}
