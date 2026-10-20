@@ -38,7 +38,7 @@ public enum DDCError: Error, Equatable, CustomStringConvertible {
 public final class DeadlineChannel: I2CChannel {
     private let inner: I2CChannel
     public let timeout: TimeInterval
-    private static let io = DispatchQueue(label: "dev.marty.SwitchBar.i2c", qos: .userInitiated, attributes: .concurrent)
+    private static let io = DispatchQueue(label: "dev.marty.MonitorMenu.i2c", qos: .userInitiated, attributes: .concurrent)
 
     public init(_ inner: I2CChannel, timeout: TimeInterval = 1.0) { self.inner = inner; self.timeout = timeout }
 

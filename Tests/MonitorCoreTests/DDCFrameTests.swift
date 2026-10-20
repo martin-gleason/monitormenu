@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwitchCore
+@testable import MonitorCore
 
 /// Framing checked against bytes the G3223D actually sent and accepted. M3.
 final class DDCFrameTests: XCTestCase {

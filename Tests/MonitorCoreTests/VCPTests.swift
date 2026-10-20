@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwitchCore
+@testable import MonitorCore
 
 final class VCPTests: XCTestCase {
     func testInputAliases() {

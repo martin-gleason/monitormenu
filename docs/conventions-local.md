@@ -1,4 +1,4 @@
-# Local conventions — SwitchBar
+# Local conventions — MonitorMenu
 
 Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 17:34 -05:00
 
@@ -18,4 +18,4 @@ Declared by `C1`. Until `C1` closes, `check_harness.py` reports this project as 
 
 ## Live check
 
-`SWITCHBAR_LIVE=1 swift test` runs the tests that talk to the Dell G3223D over DDC. Required after any change to the transport. The app bundle is built with `scripts/build-app.sh` (add `--install` for `~/Applications`).
+`MONITORMENU_LIVE=1 swift test` runs the tests that talk to the Dell G3223D over DDC. Required after any change to the transport. The app bundle is built with `scripts/build-app.sh` (add `--install` for `~/Applications`).

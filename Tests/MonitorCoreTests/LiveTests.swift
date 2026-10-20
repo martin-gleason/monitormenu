@@ -1,11 +1,11 @@
 import XCTest
-@testable import SwitchCore
+@testable import MonitorCore
 
-/// Talks to real hardware. Runs only with SWITCHBAR_LIVE=1 and an external monitor attached.
+/// Talks to real hardware. Runs only with MONITORMENU_LIVE=1 and an external monitor attached.
 /// Reads only; it never writes to the monitor.
 final class LiveTests: XCTestCase {
     override func setUpWithError() throws {
-        try XCTSkipUnless(ProcessInfo.processInfo.environment["SWITCHBAR_LIVE"] == "1", "set SWITCHBAR_LIVE=1 to run against hardware")
+        try XCTSkipUnless(ProcessInfo.processInfo.environment["MONITORMENU_LIVE"] == "1", "set MONITORMENU_LIVE=1 to run against hardware")
     }
 
     func testDiscoversAMonitorWithCapabilities() throws {

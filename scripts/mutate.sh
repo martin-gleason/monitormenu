@@ -5,27 +5,27 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 id="${1:-}"
 case "$id" in
-  M1) file=Sources/SwitchCore/Monitor.swift
+  M1) file=Sources/MonitorCore/Monitor.swift
       from='guard let caps = capabilities, caps.advertises(code) else'
       to='guard let caps = capabilities, true || caps.advertises(code) else'
       filter=WhitelistTests/testUnadvertisedCodeIsRefusedBeforeAnyI2C ;;
-  M2) file=Sources/SwitchCore/Capabilities.swift
+  M2) file=Sources/MonitorCore/Capabilities.swift
       from='case "(": flushToken(); depth += 1; values = []'
       to='case "(": flushToken(); values = []'
       filter=CapabilitiesTests/testParsesG3223DFixture ;;
-  M3) file=Sources/SwitchCore/DDCProtocol.swift
+  M3) file=Sources/MonitorCore/DDCProtocol.swift
       from='let current = UInt16(v[8]) << 8 | UInt16(v[9])'
       to='let current = UInt16(v[6]) << 8 | UInt16(v[7])'
       filter=DDCFrameTests/testCurrentInputIsLowByte ;;
-  M4) file=Sources/SwitchCore/Monitor.swift
+  M4) file=Sources/MonitorCore/Monitor.swift
       from='if VCP.factoryResets.contains(code) { throw'
       to='if false { throw'
       filter=WhitelistTests/testFactoryResetCodesAreNeverOffered ;;
-  M5) file=Sources/SwitchCore/DDCProtocol.swift
+  M5) file=Sources/MonitorCore/DDCProtocol.swift
       from='guard replyChecksum(r[0..<(total - 1)]) == r[total - 1] else'
       to='guard true else'
       filter=DDCFrameTests/testChecksumMismatchIsRejected ;;
-  M6) file=Sources/SwitchCore/I2CChannel.swift
+  M6) file=Sources/MonitorCore/I2CChannel.swift
       from='guard done.wait(timeout: .now() + timeout) == .success, let r = result else'
       to='done.wait(); guard let r = result else'
       filter=DDCFrameTests/testDeadlineChannelTimesOut ;;

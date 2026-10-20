@@ -1,4 +1,4 @@
-# SwitchBar — SPEC
+# MonitorMenu — SPEC
 
 Control your monitor from your desktop, menubar, or shortcut.
 
@@ -30,7 +30,7 @@ Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 17:34 -05:00
 | NFR4 | A DDC transaction never blocks the UI and has a timeout; a failure surfaces as a brief non-modal message, never a crash or a hang. |
 | NFR5 | The app writes only VCP codes and values the monitor advertises in its capabilities string. Factory-reset codes are never exposed. |
 | NFR6 | macOS 14 or later, Apple silicon. Intel Macs are out of scope for MVP. |
-| NFR7 | `SwitchCore` never imports AppKit. |
+| NFR7 | `MonitorCore` never imports AppKit. |
 | NFR8 | Monitor neutral: no code path is specific to one vendor. Vendor-specific value labels live in a table consulted only when the capabilities string advertises the code. |
 
 ## Hook intentions
@@ -54,5 +54,5 @@ Baseline. Changing any of this is a `D<n>`.
 - language: Swift 5.9 language mode on the installed Swift 6 toolchain
 - framework: AppKit and IOKit, no SwiftUI; SwiftPM package, no Xcode project; macOS 14 or later; no third-party dependencies
 - runner: `swift test` (XCTest)
-- layout: `Sources/SwitchCore` (library, no AppKit) · `Sources/SwitchBar` (menu bar executable) · `Sources/switchctl` (command-line executable) · `Tests/SwitchCoreTests`
+- layout: `Sources/MonitorCore` (library, no AppKit) · `Sources/MonitorMenu` (menu bar executable) · `Sources/monitorctl` (command-line executable) · `Tests/MonitorCoreTests`
 - ci: GitHub Actions on macOS once the repository is pushed; `.githooks/pre-commit` locally until then

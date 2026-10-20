@@ -1,5 +1,5 @@
 import AppKit
-import SwitchCore
+import MonitorCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let b = statusItem.button {
-            b.image = NSImage(systemSymbolName: "display", accessibilityDescription: "SwitchBar")
+            b.image = NSImage(systemSymbolName: "display", accessibilityDescription: "MonitorMenu")
             b.image?.isTemplate = true
         }
         menu.delegate = self
@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // FR9: the default hotkey is live on first launch (D9).
         hotKey = HotKey(spec: hotKeySpec) { [weak self] in self?.openSwitcher() }
-        if hotKey == nil { NSLog("SwitchBar: hotkey \"%@\" could not be registered", hotKeySpec) }
+        if hotKey == nil { NSLog("MonitorMenu: hotkey \"%@\" could not be registered", hotKeySpec) }
         // Screen changes (a monitor retraining its link, plug and unplug) → look again.
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             self?.store.scheduleRediscover()
@@ -39,11 +39,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         rebuild()
     }
 
-    /// FR7: switchbar:// URLs from Alfred, Raycast, Shortcuts "Open URL", or a terminal.
+    /// FR7: monitormenu:// URLs from Alfred, Raycast, Shortcuts "Open URL", or a terminal.
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             Task { @MainActor in
-                do { NSLog("SwitchBar: %@", try await Actions.shared.handle(url: url)) }
+                do { NSLog("MonitorMenu: %@", try await Actions.shared.handle(url: url)) }
                 catch { self.report(error.localizedDescription) }
             }
         }
@@ -161,7 +161,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(hint)
         let refresh = NSMenuItem(title: "Rescan Displays", action: #selector(rescan), keyEquivalent: "r"); refresh.target = self
         menu.addItem(refresh)
-        let quit = NSMenuItem(title: "Quit SwitchBar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let quit = NSMenuItem(title: "Quit MonitorMenu", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quit)
     }
 
@@ -196,11 +196,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// NFR4: a failed write is reported in the menu bar title for a moment, never as a modal.
     private func report(_ error: String?) {
         guard let error, let b = statusItem.button else { return }
-        NSLog("SwitchBar: %@", error)
+        NSLog("MonitorMenu: %@", error)
         b.image = NSImage(systemSymbolName: "display.trianglebadge.exclamationmark", accessibilityDescription: error)
         b.toolTip = error
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
-            self?.statusItem.button?.image = NSImage(systemSymbolName: "display", accessibilityDescription: "SwitchBar")
+            self?.statusItem.button?.image = NSImage(systemSymbolName: "display", accessibilityDescription: "MonitorMenu")
             self?.statusItem.button?.toolTip = nil
         }
     }

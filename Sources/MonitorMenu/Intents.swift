@@ -1,5 +1,5 @@
 import AppIntents
-import SwitchCore
+import MonitorCore
 
 // FR7, FR9: App Intents make every action a Shortcuts action and, via AppShortcutsProvider,
 // a Siri phrase with no setup. All call Actions.shared, the same path as the menu (D9).
@@ -85,7 +85,7 @@ struct OpenSwitcherIntent: AppIntent {
 }
 
 /// FR9: these phrases work with Siri and appear in Spotlight and the Shortcuts app on first launch.
-struct SwitchBarShortcuts: AppShortcutsProvider {
+struct MonitorMenuShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(intent: SwitchInputIntent(),
                     phrases: ["Switch my monitor to \(\.$input) with \(.applicationName)", "\(.applicationName) switch to \(\.$input)"],

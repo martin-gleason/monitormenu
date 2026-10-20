@@ -1,5 +1,5 @@
 import AppKit
-import SwitchCore
+import MonitorCore
 
 /// FR6: a compact panel listing every monitor's inputs. Press the number, or Esc to dismiss.
 final class SwitcherPanel: NSPanel {

@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwitchCore
+@testable import MonitorCore
 
 /// FR1, FR2, FR4, NFR5 — the whitelist is read from the monitor, not assumed. M2.
 final class CapabilitiesTests: XCTestCase {

@@ -1,16 +1,16 @@
 import Foundation
-import SwitchCore
+import MonitorCore
 
-// switchctl — the command-line entry point (FR7). Same SwitchCore actions as the menu.
+// monitorctl — the command-line entry point (FR7). Same MonitorCore actions as the menu.
 //
-//   switchctl list [--json]              every DDC-capable monitor with inputs and current values
-//   switchctl capabilities [--display X] the raw capabilities string
-//   switchctl get <brightness|contrast|input|power|pip> [--display X]
-//   switchctl set input <hdmi1|hdmi2|dp1|dp2|usbc|0xNN> [--display X]
-//   switchctl set <brightness|contrast> <0-100> [--display X]
-//   switchctl set power <standby|on|0xNN> [--display X]
-//   switchctl set pip <off|small|large|split|0xNN> [--display X]    switchctl set pip-source <input> [--display X]
-//   switchctl probe [--display X] [--count N]       RR2: read reliability over N reads
+//   monitorctl list [--json]              every DDC-capable monitor with inputs and current values
+//   monitorctl capabilities [--display X] the raw capabilities string
+//   monitorctl get <brightness|contrast|input|power|pip> [--display X]
+//   monitorctl set input <hdmi1|hdmi2|dp1|dp2|usbc|0xNN> [--display X]
+//   monitorctl set <brightness|contrast> <0-100> [--display X]
+//   monitorctl set power <standby|on|0xNN> [--display X]
+//   monitorctl set pip <off|small|large|split|0xNN> [--display X]    monitorctl set pip-source <input> [--display X]
+//   monitorctl probe [--display X] [--count N]       RR2: read reliability over N reads
 //
 // `get <hex code>` reads any code for diagnosis. There is deliberately no raw `set <code> <value>`:
 // writes are limited to the spec's FR2–FR5 controls (review K2, 2026-10-19).
@@ -125,5 +125,5 @@ case "probe":
     print("\(m.name): \(ok)/\(count) reads succeeded, \(fails) failed, mean \(String(format: "%.0f", avg)) ms per read (\(m.link.timing.attempts) attempts max each)")
 
 default:
-    fail("usage: switchctl list|capabilities|get|set|probe  (see source header)")
+    fail("usage: monitorctl list|capabilities|get|set|probe  (see source header)")
 }

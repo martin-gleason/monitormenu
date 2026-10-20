@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwitchCore
+@testable import MonitorCore
 
 /// NFR5, D3: the only write path refuses anything the monitor did not advertise. M1, M4.
 final class WhitelistTests: XCTestCase {

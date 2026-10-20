@@ -1,4 +1,4 @@
-# CLAUDE.md — SwitchBar
+# CLAUDE.md — MonitorMenu
 
 Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 17:34 -05:00
 
@@ -28,8 +28,8 @@ Where the spec and the register conflict, **the register wins**.
 
 - **Scope is `SPEC.md` FR1–FR9 and nothing else.** Presets, schedules, Intel Macs, the built-in display, and anything App Store are future milestones. Do not build or stub them; open a `D<n>` and stop.
 - **The app only sends what the monitor advertises.** A VCP code or value absent from the monitor's capabilities string is never written (NFR5). Factory-reset codes (0x04, 0x05, 0x08) are never exposed even when advertised.
-- **`SwitchCore` never imports AppKit.** The DDC transport, the capabilities parser and the VCP model stay testable without a UI.
-- **No third-party dependencies** without a ratified `D<n>`. No helper apps: SwitchBar does not drive BetterDisplay, MonitorControl, or any other tool.
+- **`MonitorCore` never imports AppKit.** The DDC transport, the capabilities parser and the VCP model stay testable without a UI.
+- **No third-party dependencies** without a ratified `D<n>`. No helper apps: MonitorMenu does not drive BetterDisplay, MonitorControl, or any other tool.
 - **Any change to the DDC transport is followed by the live check** against the Dell G3223D on this Mac. Offline tests cannot see the I2C path.
 - **The agent never edits `SPEC.md`.** Propose deltas; the owner ratifies.
 

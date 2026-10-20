@@ -1,7 +1,7 @@
 import Foundation
 
 /// MCCS codes the app knows how to label. Anything else the monitor advertises is still
-/// reachable by raw code through `switchctl`, shown as hex (D3).
+/// reachable by raw code through `monitorctl`, shown as hex (D3).
 public enum VCP {
     public static let brightness: UInt8 = 0x10
     public static let contrast: UInt8 = 0x12

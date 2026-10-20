@@ -1,6 +1,6 @@
 import Foundation
 import CoreGraphics
-import SwitchCore
+import MonitorCore
 
 /// The one action layer behind the menu, the hotkey switcher, the URL scheme and the intents (D6, D9).
 /// Resolves "which monitor" the same way everywhere: by name substring, else the first one.
@@ -98,7 +98,7 @@ final class Actions {
 
     func rescan() { store.discover() }
 
-    /// switchbar://input/hdmi2?display=dell · brightness/60 · contrast/70 · pip/small · pip-source/hdmi1 · sleep · switcher · rescan
+    /// monitormenu://input/hdmi2?display=dell · brightness/60 · contrast/70 · pip/small · pip-source/hdmi1 · sleep · switcher · rescan
     func handle(url: URL) async throws -> String {
         let display = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "display" }?.value
         let verb = url.host ?? ""

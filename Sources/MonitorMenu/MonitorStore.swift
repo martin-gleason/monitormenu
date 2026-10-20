@@ -1,6 +1,6 @@
 import Foundation
 import CoreGraphics
-import SwitchCore
+import MonitorCore
 
 /// What the menu shows for one monitor. Read on the DDC queue, published on main.
 struct MonitorState {
@@ -24,7 +24,7 @@ struct MonitorState {
 final class MonitorStore {
     private(set) var states: [MonitorState] = []
     var onChange: (() -> Void)?
-    private let work = DispatchQueue(label: "dev.marty.SwitchBar.work", qos: .userInitiated)
+    private let work = DispatchQueue(label: "dev.marty.MonitorMenu.work", qos: .userInitiated)
     private var rediscoverPending = false
     /// Capabilities by monitor serial, kept across rediscovery so a monitor that is mid-link-renegotiation
     /// (PiP on/off and input switches both make macOS reconfigure the display) is not dropped.
@@ -36,7 +36,7 @@ final class MonitorStore {
         // can replace the display's IOAVService, so every "after" event triggers a (debounced) rediscovery.
         CGDisplayRegisterReconfigurationCallback({ _, flags, userInfo in
             guard !flags.contains(.beginConfigurationFlag), let info = userInfo else { return }
-            NSLog("SwitchBar: display reconfigured (flags 0x%x)", flags.rawValue)
+            NSLog("MonitorMenu: display reconfigured (flags 0x%x)", flags.rawValue)
             Unmanaged<MonitorStore>.fromOpaque(info).takeUnretainedValue().scheduleRediscover()
         }, Unmanaged.passUnretained(self).toOpaque())
     }
@@ -46,7 +46,7 @@ final class MonitorStore {
 
     func scheduleRediscover() {
         guard !rediscoverPending else { return }
-        NSLog("SwitchBar: screen change — rediscovery scheduled")
+        NSLog("MonitorMenu: screen change — rediscovery scheduled")
         rediscoverPending = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.rediscoverPending = false
@@ -92,7 +92,7 @@ final class MonitorStore {
                 self.readValues(into: &s)
                 found.append(s)
             }
-            NSLog("SwitchBar: discovery → %@", found.map { "\($0.name) [\($0.id)] display \($0.displayID.map(String.init) ?? "?")\($0.lastError.map { " (" + $0 + ")" } ?? "")" }.joined(separator: ", "))
+            NSLog("MonitorMenu: discovery → %@", found.map { "\($0.name) [\($0.id)] display \($0.displayID.map(String.init) ?? "?")\($0.lastError.map { " (" + $0 + ")" } ?? "")" }.joined(separator: ", "))
             return found
     }
 
@@ -150,7 +150,7 @@ final class MonitorStore {
                 guard let self else { return }
                 var err: String?
                 do { try action(monitor) } catch let first {
-                    NSLog("SwitchBar: action on %@ failed: %@", id, "\(first)")
+                    NSLog("MonitorMenu: action on %@ failed: %@", id, "\(first)")
                     err = "\(first)"
                     if case DDCError.ioFailed = first {
                         // The display retrained its link and the IOAVService is gone (MACH_SEND_INVALID_DEST). The
@@ -161,7 +161,7 @@ final class MonitorStore {
                             let fresh = self.discoverSync()
                             if !fresh.isEmpty { DispatchQueue.main.async { self.states = fresh; self.onChange?() } }
                             guard let again = fresh.first(where: { $0.id == id })?.monitor else { continue }
-                            do { try action(again); err = nil; NSLog("SwitchBar: retry %d on fresh service succeeded", round); break }
+                            do { try action(again); err = nil; NSLog("MonitorMenu: retry %d on fresh service succeeded", round); break }
                             catch { err = "retry \(round): \(error)"; if case DDCError.ioFailed = error { continue } else { break } }
                         }
                     }

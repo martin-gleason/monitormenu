@@ -2,7 +2,7 @@ import Carbon.HIToolbox
 import Foundation
 
 /// A global hotkey via Carbon's RegisterEventHotKey — no Accessibility permission needed (D9).
-/// Default ⌃⌥⌘I. Override: `defaults write dev.marty.SwitchBar hotkey "ctrl+opt+cmd+i"`.
+/// Default ⌃⌥⌘I. Override: `defaults write dev.marty.MonitorMenu hotkey "ctrl+opt+cmd+i"`.
 final class HotKey {
     private var hotKeyRef: EventHotKeyRef?
     private var handlerRef: EventHandlerRef?

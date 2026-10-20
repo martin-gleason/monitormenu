@@ -3,8 +3,8 @@
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 echo "pre-commit: swift test"
-if ! swift test >/tmp/switchbar-precommit.log 2>&1; then tail -20 /tmp/switchbar-precommit.log; echo "pre-commit: tests failed"; exit 1; fi
-n=$(grep -E "Executed [0-9]+ tests?" /tmp/switchbar-precommit.log | tail -1 | sed -E 's/.*Executed ([0-9]+) tests?.*/\1/')
+if ! swift test >/tmp/monitormenu-precommit.log 2>&1; then tail -20 /tmp/monitormenu-precommit.log; echo "pre-commit: tests failed"; exit 1; fi
+n=$(grep -E "Executed [0-9]+ tests?" /tmp/monitormenu-precommit.log | tail -1 | sed -E 's/.*Executed ([0-9]+) tests?.*/\1/')
 floor=$(cat Tests/ASSERTION_FLOOR 2>/dev/null || echo 0)
 if [[ "${n:-0}" -lt "$floor" ]]; then echo "pre-commit: executed=$n is below the floor of $floor (Tests/ASSERTION_FLOOR)"; exit 1; fi
 echo "pre-commit: executed=$n floor=$floor"

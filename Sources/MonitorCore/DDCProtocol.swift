@@ -83,9 +83,9 @@ public struct DDCTiming {
     public var attempts = 5
     public init() {}
 
-    /// Debug knobs, read once: SWITCHBAR_DEBUG dumps reply bytes; SWITCHBAR_REPLY_DELAY_MS / SWITCHBAR_GAP_MS tune pacing.
+    /// Debug knobs, read once: MONITORMENU_DEBUG dumps reply bytes; MONITORMENU_REPLY_DELAY_MS / MONITORMENU_GAP_MS tune pacing.
     static let env = ProcessInfo.processInfo.environment
-    static let debug = env["SWITCHBAR_DEBUG"] != nil
+    static let debug = env["MONITORMENU_DEBUG"] != nil
 }
 
 /// One monitor's DDC conversation, serialized on its own queue. Callers run these off the main
@@ -98,9 +98,9 @@ public final class DDCMonitorLink {
 
     public init(channel: I2CChannel, label: String) {
         self.channel = channel
-        self.queue = DispatchQueue(label: "dev.marty.SwitchBar.ddc.\(label)")
-        if let ms = Double(DDCTiming.env["SWITCHBAR_REPLY_DELAY_MS"] ?? "") { timing.replyDelay = ms / 1000 }
-        if let ms = Double(DDCTiming.env["SWITCHBAR_GAP_MS"] ?? "") { timing.commandGap = ms / 1000 }
+        self.queue = DispatchQueue(label: "dev.marty.MonitorMenu.ddc.\(label)")
+        if let ms = Double(DDCTiming.env["MONITORMENU_REPLY_DELAY_MS"] ?? "") { timing.replyDelay = ms / 1000 }
+        if let ms = Double(DDCTiming.env["MONITORMENU_GAP_MS"] ?? "") { timing.commandGap = ms / 1000 }
     }
 
     private func pace() {

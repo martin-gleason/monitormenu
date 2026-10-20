@@ -1,6 +1,6 @@
-# Register — SwitchBar
+# Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 20:30 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 20:45 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -18,13 +18,14 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | D2 | proposed | MVP | Layout mirrors HueBar and DockWatch: `SwitchCore` library (no AppKit, fully testable) + thin `SwitchBar` AppKit executable + `switchctl` command-line executable + `scripts/build-app.sh`. SwiftPM, no Xcode project. |
 | D3 | proposed | MVP | The monitor's capabilities string is the whitelist. The app offers and writes only the VCP codes and values it advertises, and never exposes 0x04, 0x05, 0x08 (factory resets). Unknown values are shown as raw hex, never guessed at. |
 | D4 | proposed | MVP | The built-in display is excluded. It has no DDC channel and macOS already controls its brightness. |
-| D5 | proposed | MVP | Name: **SwitchBar**, bundle id `dev.marty.SwitchBar`, repo `martin-gleason/switchbar`. Chosen by the agent; the owner may rename before the first commit (`O4`). |
+| D5 | superseded by D12 | MVP | Name: **SwitchBar**, bundle id `dev.marty.SwitchBar`, repo `martin-gleason/switchbar`. Chosen by the agent; the owner may rename before the first commit (`O4`). |
 | D6 | proposed | MVP | External automation surface is a `switchbar://` URL scheme plus the `switchctl` binary. Both call the same `SwitchCore` actions as the menu. |
 | D7 | proposed | MVP | Prior art reviewed 2026-10-19 (`docs/learnings/2026-10-19-prior-art.md`). SwitchBar's uncovered ground is PiP/PbP from the menu bar and the D3 whitelist; input switching with hotkeys and a CLI already exists in OpenDisplay, Lunar and m1ddc. m1ddc's documented Dell values label 0x00, 0x21, 0x22 and 0x24 of the G3223D's PiP modes; the other six stay hex until `O5`. |
 | D8 | ratified | MVP | **Vision sentence rewritten by the owner 2026-10-19:** "Control your monitor from your desktop, menubar, or shortcut." Pasted into the spec by the agent on the owner's instruction. Replaces the agent-punctuated draft "SwitchBar allows fast, convenient switching of monitor inputs and functions right from the desktop, the menu bar, or a menu switcher." Adds FR9 (ships with a shortcut) and NFR8 (monitor neutral). |
 | D9 | proposed | MVP | **Built as written; the fallback was not needed** — `appintentsmetadataprocessor` runs from `scripts/build-app.sh` on the `.swiftconstvalues` this toolchain's SwiftPM emits, and `Metadata.appintents/extract.actionsdata` lists all six intents and the Siri phrases. "Shortcut" means four surfaces, all calling the same `SwitchCore` actions: a global hotkey (Carbon `RegisterEventHotKey`, default ⌃⌥⌘I, overridable in `UserDefaults`); App Intents with an `AppShortcutsProvider` so actions appear in the Shortcuts app and Siri with no setup; the `switchbar://` URL scheme for Alfred, Raycast and scripts; the `switchctl` binary. App Intents metadata in a SwiftPM-built bundle needs `appintentsmetadataprocessor` run from `scripts/build-app.sh`; if that cannot be made to work inside F1-T5, the fallback is a bundled signed `.shortcut` wrapping the URL scheme, recorded as its own `D<n>`. |
 | D10 | proposed | MVP | Monitor neutral (NFR8). The HP Omen the owner expects within 90 days of 2026-10-19 is the second test monitor; until it arrives, two-display matching is tested with a fixture, not hardware (`O10`). |
 | D11 | proposed | MVP | `switchctl` has no raw `set <code> <value>`; writes are limited to the spec's controls (input, brightness, contrast, power, PiP mode and source). Raw `get 0xNN` stays for diagnosis. Source: review K2. The volume round-trip used as write-path evidence on 2026-10-19 was made with the command before it was removed. |
+| D12 | ratified | MVP | **Supersedes D5.** The owner named it **MonitorMenu** on 2026-10-19: "Name is MonitorMenu". Bundle id `dev.marty.MonitorMenu`, URL scheme `monitormenu://`, library `MonitorCore`, command line `monitorctl`, repo `martin-gleason/monitormenu`. Register rows, the review log and the learnings keep the old name as the historical record. |
 
 ## Risks (RR)
 
@@ -50,10 +51,10 @@ Outstanding items only the owner can close.
 | O1 | Ratify or rewrite the vision sentence in `docs/specs/SPEC.md`. | P1 | closed 2026-10-19 — owner: "The vision statement is: Control your monitor from your desktop, menubar, or shortcut." (D8) |
 | O2 | Lock the learning level. Agent proposes **5%** (Swift is not in the owner's language set; same as HueBar and DockWatch). | P1 | open |
 | O3 | Say what "from the desktop" and "a menu switcher" mean to you. The agent read them as FR6 (hotkey switcher) and FR7 (URL scheme + CLI for Raycast, Alfred, Shortcuts). | P0 | closed 2026-10-19 — owner: "can use Siri, Alfred, or shortcuts as well as a menu bar or hot key switch" (D9) |
-| O4 | Confirm the name SwitchBar or pick another (D5). | P2 | open |
+| O4 | Confirm the name SwitchBar or pick another (D5). | P2 | closed 2026-10-19 — "Name is MonitorMenu" (D12) |
 | O5 | Sit at the G3223D for ten minutes while the agent steps through the 0xE9 values and say what each one shows. Closes RR5. | P1 | open |
 | O6 | Ratify D1–D6. | P2 | open |
-| O7 | Create the GitHub repository and say whether it is public or private. C1-T6 waits on it. | P2 | open |
+| O7 | Create the GitHub repository and say whether it is public or private. C1-T6 waits on it. | P2 | closed 2026-10-19 — "you can craft the github page": created public by the agent as `martin-gleason/monitormenu`, matching HueBar and DockWatch; flip with `gh repo edit --visibility private` if the monitor serial in the docs bothers you |
 | O8 | Gate C1 and F1: the yes that opens the build. | P0 | closed 2026-10-19 — owner: "Go ahead with a monitor neutral native swift app" |
 | O9 | With the installed app launched once, open the Shortcuts app and confirm SwitchBar's actions are listed; then ask Siri to run one. Only the owner can speak to Siri. Closes the live half of FR9. | P1 | open |
 | O10 | When the HP Omen arrives, connect both monitors and run the live check; paste `switchctl list`. Closes two-display matching (D10). | P2 | open |
@@ -73,7 +74,8 @@ Outstanding items only the agent can close: defects in its own work, findings it
 
 | ID | Chore | P | Status | Owner | Plan |
 |---|---|---|---|---|---|
-| C1 | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. | P0 | open — T1–T5 done 2026-10-19, T6 (CI + branch protection) waits on `O7` | agent | `docs/plans/C1.md` |
+| C1 | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. | P0 | open — T1–T5 done 2026-10-19, T6 in progress (repo created 2026-10-19) | agent | `docs/plans/C1.md` |
+| C2 | Rename SwitchBar → MonitorMenu (D12): directories, identifiers, bundle id, URL scheme, CLI, docs; historical rows untouched. | P1 | done 2026-10-19 | agent | — |
 
 ## Gates (G)
 
