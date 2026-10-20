@@ -25,7 +25,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 
 | ID | Kind | Status | Milestone | P | Owner | Plan | Tasks |
 |---|---|---|---|---|---|---|---|
-| C1 | chore | in progress (gate crossed 2026-10-19) — T1–T5 done 2026-10-19, T6 waits on `O7` | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
+| C1 | chore | done 2026-10-19 | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
 | F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass owed (`A2`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
 
 ## Registers
@@ -40,7 +40,7 @@ Counted from the register itself. A register with no rows still gets a line.
 | Agent items (`A`) | 2 | 2 | 0 | 0 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
 | Mutations (`M`) | 6 | 0 | 0 | 6 |
-| Chores (`C`) | 2 | 1 | 0 | 1 |
+| Chores (`C`) | 2 | 0 | 0 | 2 |
 | Gates (`G`) | 2 | 0 | 0 | 2 |
 
 ### By status
@@ -58,8 +58,7 @@ Counted from the register itself. A register with no rows still gets a line.
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 6 |
-| `C` | done | 1 |
-| `C` | open | 1 |
+| `C` | done | 2 |
 | `G` | done | 2 |
 
 ## Hooks
@@ -82,7 +81,6 @@ Every open row in the register. Owner is the row's Owner column where the table 
 
 | Owner | ID | P | Status | Item |
 |---|---|---|---|---|
-| agent | C1 | P0 | open | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. |
 | agent | RR1 | — | open | IOAVService is undocumented. A macOS update can change or remove it, and an app using it is not App Store eligible. |
 | agent | RR4 | — | open | A wrong VCP write can put a monitor into an odd state (factory reset, locked OSD). |
 | agent | RR8 | — | open | switchctl and the app share one I2C bus. Both transacting at the same instant corrupts one side's read (observed: switch… |
@@ -110,4 +108,4 @@ Every open row in the register. Owner is the row's Owner column where the table 
 
 ---
 
-25 open register rows.
+24 open register rows.
