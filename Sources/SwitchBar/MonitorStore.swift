@@ -14,7 +14,9 @@ struct MonitorState {
     var powerModes: [UInt8] = []
     var lastError: String?
     var name: String { monitor.name }
-    var id: CGDirectDisplayID { monitor.identity.displayID ?? 0 }
+    /// Identity key for actions and menu items: the serial, which survives the display-id changes PiP causes.
+    var id: String { monitor.identity.key }
+    var displayID: CGDirectDisplayID? { monitor.identity.displayID }
 }
 
 /// Owns discovery, the serial DDC work queue, and the latest state per monitor (FR1, FR8, NFR4).
@@ -34,6 +36,7 @@ final class MonitorStore {
         // can replace the display's IOAVService, so every "after" event triggers a (debounced) rediscovery.
         CGDisplayRegisterReconfigurationCallback({ _, flags, userInfo in
             guard !flags.contains(.beginConfigurationFlag), let info = userInfo else { return }
+            NSLog("SwitchBar: display reconfigured (flags 0x%x)", flags.rawValue)
             Unmanaged<MonitorStore>.fromOpaque(info).takeUnretainedValue().scheduleRediscover()
         }, Unmanaged.passUnretained(self).toOpaque())
     }
@@ -54,8 +57,9 @@ final class MonitorStore {
             let found = self.discoverSync()
             DispatchQueue.main.async {
                 self.states = found; self.onChange?()
-                // A display came and went during a link renegotiation: look again shortly, a few times.
-                if found.isEmpty, self.emptyRetries < 3 {
+                // A display came and went during a link renegotiation, or CoreGraphics had not paired it yet:
+                // look again shortly, a few times.
+                if found.isEmpty || found.contains(where: { $0.displayID == nil }), self.emptyRetries < 3 {
                     self.emptyRetries += 1
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.discover() }
                 } else { self.emptyRetries = 0 }
@@ -71,7 +75,7 @@ final class MonitorStore {
             let discovered = MonitorDiscovery.discover()
             for m in discovered {
                 var s = MonitorState(monitor: m)
-                let key = m.identity.alphanumericSerial ?? "\(m.identity.vendor)-\(m.identity.model)-\(m.identity.serial)"
+                let key = m.identity.key
                 do {
                     let caps = try m.loadCapabilities()
                     DispatchQueue.main.async { self.knownCapabilities[key] = caps }
@@ -84,13 +88,13 @@ final class MonitorStore {
                 self.readValues(into: &s)
                 found.append(s)
             }
-            _ = discovered
+            NSLog("SwitchBar: discovery → %@", found.map { "\($0.name) [\($0.id)] display \($0.displayID.map(String.init) ?? "?")\($0.lastError.map { " (" + $0 + ")" } ?? "")" }.joined(separator: ", "))
             return found
     }
 
     /// Re-reads live values for every monitor (menu open, after an action) — FR8.
     /// `states` belongs to the main thread: snapshot there, work on the copy, publish back on main.
-    func refresh(only id: CGDirectDisplayID? = nil) {
+    func refresh(only id: String? = nil) {
         onMain { [weak self] in
             guard let self else { return }
             let snapshot = self.states
@@ -131,7 +135,7 @@ final class MonitorStore {
     }
 
     /// Every action funnels through here: write on the queue, then re-read that monitor (FR8).
-    func perform(on id: CGDirectDisplayID, _ action: @escaping (Monitor) throws -> Void, completion: ((String?) -> Void)? = nil) {
+    func perform(on id: String, _ action: @escaping (Monitor) throws -> Void, completion: ((String?) -> Void)? = nil) {
         onMain { [weak self] in
             guard let self else { return }
             guard let s = self.states.first(where: { $0.id == id }) else { completion?("monitor is gone"); return }
@@ -140,14 +144,15 @@ final class MonitorStore {
                 guard let self else { return }
                 var err: String?
                 do { try action(monitor) } catch let first {
+                    NSLog("SwitchBar: action on %@ failed: %@", id, "\(first)")
                     if case DDCError.ioFailed = first {
                         // The display reconfigured under us and the IOAVService is stale (MACH_SEND_INVALID_DEST):
                         // rediscover inline and retry once on the fresh service.
                         let fresh = self.discoverSync()
                         DispatchQueue.main.async { self.states = fresh; self.onChange?() }
                         if let again = fresh.first(where: { $0.id == id })?.monitor {
-                            do { try action(again) } catch { err = "\(error)" }
-                        } else { err = "\(first)" }
+                            do { try action(again); NSLog("SwitchBar: retry on fresh service succeeded") } catch { err = "retry: \(error)" }
+                        } else { err = "\(first) (monitor \(id) not found after rediscovery)" }
                     } else { err = "\(first)" }
                 }
                 DispatchQueue.main.async { completion?(err) }

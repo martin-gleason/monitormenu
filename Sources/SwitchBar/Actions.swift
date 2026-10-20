@@ -28,11 +28,11 @@ final class Actions {
         let states = store.states
         guard !states.isEmpty else { throw ActionError.noMonitor(nil) }
         guard let sel = selector?.trimmingCharacters(in: .whitespaces), !sel.isEmpty else { return states[0] }
-        if let m = states.first(where: { $0.name.lowercased().contains(sel.lowercased()) || "\($0.id)" == sel }) { return m }
+        if let m = states.first(where: { $0.name.lowercased().contains(sel.lowercased()) || $0.id == sel || $0.displayID.map { "\($0)" == sel } == true }) { return m }
         throw ActionError.noMonitor(sel)
     }
 
-    private func run(_ id: CGDirectDisplayID, _ body: @escaping (Monitor) throws -> Void) async throws {
+    private func run(_ id: String, _ body: @escaping (Monitor) throws -> Void) async throws {
         try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
             store.perform(on: id, body) { err in
                 if let err { c.resume(throwing: ActionError.ddc(err)) } else { c.resume() }

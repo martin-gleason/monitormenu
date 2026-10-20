@@ -4,7 +4,7 @@ import SwitchCore
 /// FR6: a compact panel listing every monitor's inputs. Press the number, or Esc to dismiss.
 final class SwitcherPanel: NSPanel {
     private let content = SwitcherView()
-    var onPick: ((CGDirectDisplayID, UInt8) -> Void)?
+    var onPick: ((String, UInt8) -> Void)?
 
     init() {
         super.init(contentRect: NSRect(x: 0, y: 0, width: 320, height: 200), styleMask: [.titled, .nonactivatingPanel, .hudWindow, .utilityWindow], backing: .buffered, defer: true)
@@ -37,9 +37,9 @@ final class SwitcherPanel: NSPanel {
 /// Rows are laid out top-down in monitor order, then input order; row k (1-based) is what key k picks.
 final class SwitcherView: NSView {
     var states: [MonitorState] = [] { didSet { rebuild() } }
-    var onPick: ((CGDirectDisplayID, UInt8) -> Void)?
+    var onPick: ((String, UInt8) -> Void)?
     var onCancel: (() -> Void)?
-    private var rows: [(id: CGDirectDisplayID, code: UInt8)] = []
+    private var rows: [(id: String, code: UInt8)] = []
     private(set) var preferredHeight: CGFloat = 60
 
     override var acceptsFirstResponder: Bool { true }

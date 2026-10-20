@@ -169,7 +169,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return item
     }
 
-    final class Action: NSObject { let id: CGDirectDisplayID; let code: UInt8; init(id: CGDirectDisplayID, code: UInt8) { self.id = id; self.code = code } }
+    final class Action: NSObject { let id: String; let code: UInt8; init(id: String, code: UInt8) { self.id = id; self.code = code } }
 
     @objc private func pickInput(_ sender: NSMenuItem) {
         guard let a = sender.representedObject as? Action else { return }

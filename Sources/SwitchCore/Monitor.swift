@@ -9,6 +9,9 @@ public struct MonitorIdentity: Equatable, Codable {
     public var serial: UInt32
     public var alphanumericSerial: String?
     public var displayID: CGDirectDisplayID?
+    /// Stable across reconfigurations, unlike `displayID`: the serial, else vendor-model-serial.
+    public var key: String { alphanumericSerial.flatMap { $0.isEmpty ? nil : $0 } ?? "\(vendor)-\(model)-\(serial)" }
+
     public init(name: String, vendor: UInt32, model: UInt32, serial: UInt32, alphanumericSerial: String? = nil, displayID: CGDirectDisplayID? = nil) {
         self.name = name; self.vendor = vendor; self.model = model; self.serial = serial
         self.alphanumericSerial = alphanumericSerial; self.displayID = displayID
