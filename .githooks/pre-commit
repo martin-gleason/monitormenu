@@ -1,0 +1,14 @@
+#!/bin/zsh
+# C1-T3: gates run after the last edit. swift test, the assertion floor, and a fresh status page.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+echo "pre-commit: swift test"
+if ! swift test >/tmp/switchbar-precommit.log 2>&1; then tail -20 /tmp/switchbar-precommit.log; echo "pre-commit: tests failed"; exit 1; fi
+n=$(grep -E "Executed [0-9]+ tests?" /tmp/switchbar-precommit.log | tail -1 | sed -E 's/.*Executed ([0-9]+) tests?.*/\1/')
+floor=$(cat Tests/ASSERTION_FLOOR 2>/dev/null || echo 0)
+if [[ "${n:-0}" -lt "$floor" ]]; then echo "pre-commit: executed=$n is below the floor of $floor (Tests/ASSERTION_FLOOR)"; exit 1; fi
+echo "pre-commit: executed=$n floor=$floor"
+GEN=~/Local_Dev_Projects/turing-review/scripts/gen_status.py
+if [[ -f "$GEN" ]]; then python3 "$GEN" . --check || { echo "pre-commit: status page is stale — run: python3 $GEN ."; exit 1; }; fi
+if git diff --cached -U0 | grep -E '^\+' | grep -qiE '(api[_-]?key|secret|password|token)\s*[:=]\s*["'"'"'][A-Za-z0-9/+_-]{16,}'; then echo "pre-commit: possible secret in the diff"; exit 1; fi
+exit 0
