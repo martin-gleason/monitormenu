@@ -1,6 +1,6 @@
 # Register — SwitchBar
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 17:57 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 19:05 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -30,10 +30,13 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | ID | Risk | Status | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|---|---|
 | RR1 | `IOAVService` is undocumented. A macOS update can change or remove it, and an app using it is not App Store eligible. | open | Medium over years | App stops working after an OS update | Transport isolated behind one protocol in `SwitchCore`; live check on this Mac; App Store already out of scope. | agent |
-| RR2 | Single-value DDC reads and writes through BetterDisplay failed on this Mac while the full capabilities scan succeeded. Cause unknown; may indicate a flaky I2C link on HDMI 1. | open | Observed 2026-10-19 | Switches silently fail or need retries | F1-T1 measures raw I2C reliability first and adds bounded retries; result recorded in the plan. | agent |
+| RR2 | Single-value DDC reads and writes through BetterDisplay failed on this Mac while the full capabilities scan succeeded. Cause unknown; may indicate a flaky I2C link on HDMI 1. | resolved 2026-10-19 — the link is fine: `switchctl probe` 100/100 reads, mean 117 ms; 30/30 cold-process reads of 0xDF correct; m1ddc 1.2.0 also misreads this monitor, so the fault was in those tools' timing, not the cable | Observed 2026-10-19 | Switches silently fail or need retries | F1-T1 measures raw I2C reliability first and adds bounded retries; result recorded in the plan. | agent |
 | RR3 | After switching the monitor to another input, the Mac may lose the DDC channel (some monitors stop answering I2C on an inactive input). The Mac then cannot switch back. | open | Unknown for the G3223D | Owner must use the monitor's buttons or the other source to return | Tested in F1-T2 on the G3223D and documented. A "switch back after N seconds" option is a future `D<n>` if needed. | human |
 | RR4 | A wrong VCP write can put a monitor into an odd state (factory reset, locked OSD). | open | Low with D3 | Monitor needs manual recovery | D3 whitelist + M1 mutation test. | agent |
 | RR5 | Meaning of the G3223D's ten PIP/PBP values (VCP 0xE9) is not documented anywhere the agent could find. | open | Certain | PIP menu labels could be wrong | Hands-on mapping session with the owner at the monitor (`O5`); unmapped values shown as hex. | human |
+
+| RR6 | The G3223D reports brightness 0/100 and contrast 100/100 and refuses writes to both, while every other code reads correctly and volume round-trips. Between BetterDisplay's 17:19 scan (56/75) and 18:10 the Dell preset code 0xF0 moved 0x0F → 0x34 and 0xE2 0x20 → 0x27, and 0xF0 refuses a write back. Looks like the monitor entered an HDR or locked preset while BetterDisplay was running. | open | Observed 2026-10-19 | FR3 cannot be verified live until the monitor is out of that state | Owner looks at the OSD (`O11`); the app shows brightness as "—" when the monitor reports max-locked values rather than pretending. | human |
+| RR7 | Input switching cannot be verified by the agent alone: switching the monitor away from the Mac's input may leave it on a source with no signal (RR3), and only a person at the desk can switch back if DDC stops answering. | open | Certain | FR2 live check waits on the owner | `O12`: the owner runs the first switch with a second source attached and the monitor's buttons within reach. | human |
 
 ## Owner items (O)
 
@@ -51,6 +54,8 @@ Outstanding items only the owner can close.
 | O8 | Gate C1 and F1: the yes that opens the build. | P0 | closed 2026-10-19 — owner: "Go ahead with a monitor neutral native swift app" |
 | O9 | With the installed app launched once, open the Shortcuts app and confirm SwitchBar's actions are listed; then ask Siri to run one. Only the owner can speak to Siri. Closes the live half of FR9. | P1 | open |
 | O10 | When the HP Omen arrives, connect both monitors and run the live check; paste `switchctl list`. Closes two-display matching (D10). | P2 | open |
+| O11 | Look at the Dell's on-screen menu: is Brightness greyed out, and is Smart HDR or a game preset on? Brightness reads 0 and refuses writes over DDC since about 18:00 on 2026-10-19 (RR6). Turning HDR or the preset off from the buttons should bring 56/75 back; then `switchctl get brightness` closes this. | P1 | open |
+| O12 | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input button is), then pick that input from the SwitchBar menu and switch back from the other side or the buttons. Closes FR2 live and answers RR3. | P1 | open |
 
 ## Agent items (A)
 
@@ -63,7 +68,7 @@ Outstanding items only the agent can close: defects in its own work, findings it
 
 | ID | Chore | P | Status | Owner | Plan |
 |---|---|---|---|---|---|
-| C1 | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. | P0 | open | agent | `docs/plans/C1.md` |
+| C1 | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. | P0 | open — T1–T5 done 2026-10-19, T6 (CI + branch protection) waits on `O7` | agent | `docs/plans/C1.md` |
 
 ## Gates (G)
 
@@ -80,13 +85,13 @@ Deterministic enforcement. Prose is advisory; hooks are not. An `H<n>` is a plan
 
 | ID | Hook | Surface | Protects | Status |
 |---|---|---|---|---|
-| H1 | `swift test` passes | pre-commit + CI | the test gate | not built (C1-T3, C1-T6) |
-| H2 | Assertion count not below `Tests/ASSERTION_FLOOR` | pre-commit + CI | a suite that silently shrank | not built (C1-T2) |
-| H3 | No register ID in a commit, branch or PR title | commit-msg | the two-tier grammar | not built (C1-T3) |
-| H4 | Harness declared and its commands run | upstream `check_harness.py --run` | an undeclared or dead harness | not built (C1-T5) |
+| H1 | `swift test` passes | pre-commit + CI | the test gate | built — pre-commit runs it on every commit (C1-T3); CI waits on `O7` (C1-T6) |
+| H2 | Assertion count not below `Tests/ASSERTION_FLOOR` | pre-commit + CI | a suite that silently shrank | built — refused a floor of 17 against 16 on 2026-10-19 (C1-T3) |
+| H3 | No register ID in a commit, branch or PR title | commit-msg | the two-tier grammar | built — refused `fix(F1): closes D1 and RR2` on 2026-10-19 (C1-T3) |
+| H4 | Harness declared and its commands run | upstream `check_harness.py --run` | an undeclared or dead harness | built — reports `ok switchbar` 2026-10-19 (C1-T5) |
 | H5 | Every FR has a test or a named manual check with evidence | plan review checklist | drift, both directions | open (manual checklist, no mechanism) |
-| H6 | Nothing outside the capabilities whitelist is ever written | `swift test` (M1) | the monitor, from a bad write | not built (F1-T1) |
-| H7 | Status page regenerates clean | pre-commit + CI | a stale status page | not built (C1-T3, C1-T6) |
+| H6 | Nothing outside the capabilities whitelist is ever written | `swift test` (M1, M4) | the monitor, from a bad write | built — M1 and M4 killed 2026-10-19 (F1-T1) |
+| H7 | Status page regenerates clean | pre-commit + CI | a stale status page | built — pre-commit runs `gen_status.py --check` (C1-T3); CI waits on `O7` |
 
 ## Mutations (M)
 
@@ -94,7 +99,7 @@ Named ways to break the code, each paired with the test that must catch it. A te
 
 | ID | File | Mutation | Caught by | Status |
 |---|---|---|---|---|
-| M1 | `Sources/SwitchCore/VCPWriter.swift` | Remove the capabilities check before a VCP write | `WhitelistTests.testUnadvertisedCodeIsRefusedBeforeAnyI2C` | proposed |
-| M2 | `Sources/SwitchCore/Capabilities.swift` | Mis-parse nested parentheses in the capabilities string (`vcp(... 60(1B 0F 11 12) ...)`) | `CapabilitiesTests.testParsesG3223DFixture` | proposed |
-| M3 | `Sources/SwitchCore/VCPReply.swift` | Read the input code from the high byte of the 0x60 reply instead of the low byte | `VCPReplyTests.testCurrentInputIsLowByte` | proposed |
-| M4 | `Sources/SwitchCore/VCPWriter.swift` | Let a factory-reset code (0x04, 0x05, 0x08) through when the monitor advertises it | `WhitelistTests.testFactoryResetCodesAreNeverOffered` | proposed |
+| M1 | `Sources/SwitchCore/Monitor.swift` | Remove the capabilities check before a VCP write | `WhitelistTests.testUnadvertisedCodeIsRefusedBeforeAnyI2C` | killed 2026-10-19: 3 failures / 1 test (`scripts/mutate.sh M1`) |
+| M2 | `Sources/SwitchCore/Capabilities.swift` | Mis-parse nested parentheses in the capabilities string (`vcp(... 60(1B 0F 11 12) ...)`) | `CapabilitiesTests.testParsesG3223DFixture` | killed 2026-10-19: 5 failures / 1 test (`scripts/mutate.sh M2`) |
+| M3 | `Sources/SwitchCore/DDCProtocol.swift` | Read the current value from bytes 6–7 of the reply (the maximum) instead of 8–9 | `DDCFrameTests.testCurrentInputIsLowByte` | killed 2026-10-19: 2 failures / 1 test (`scripts/mutate.sh M3`) |
+| M4 | `Sources/SwitchCore/Monitor.swift` | Let a factory-reset code (0x04, 0x05, 0x08) through when the monitor advertises it | `WhitelistTests.testFactoryResetCodesAreNeverOffered` | killed 2026-10-19: 4 failures / 1 test (`scripts/mutate.sh M4`) |

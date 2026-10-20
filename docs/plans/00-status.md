@@ -25,7 +25,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 
 | ID | Kind | Status | Milestone | P | Owner | Plan | Tasks |
 |---|---|---|---|---|---|---|---|
-| C1 | chore | in progress (gate crossed 2026-10-19) | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
+| C1 | chore | in progress (gate crossed 2026-10-19) — T1–T5 done 2026-10-19, T6 waits on `O7` | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
 | F1 | feature | in progress (gate crossed 2026-10-19) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
 
 ## Registers
@@ -35,11 +35,11 @@ Counted from the register itself. A register with no rows still gets a line.
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
 | Decisions (`D`) | 10 | 9 | 0 | 1 |
-| Risks (`RR`) | 5 | 5 | 0 | 0 |
-| Owner items (`O`) | 10 | 7 | 0 | 3 |
+| Risks (`RR`) | 7 | 6 | 0 | 1 |
+| Owner items (`O`) | 12 | 9 | 0 | 3 |
 | Agent items (`A`) | 0 | 0 | 0 | 0 |
-| Hooks (`H`) | 7 | 7 | 0 | 0 |
-| Mutations (`M`) | 4 | 4 | 0 | 0 |
+| Hooks (`H`) | 7 | 1 | 0 | 6 |
+| Mutations (`M`) | 4 | 0 | 0 | 4 |
 | Chores (`C`) | 1 | 1 | 0 | 0 |
 | Gates (`G`) | 2 | 0 | 0 | 2 |
 
@@ -49,28 +49,29 @@ Counted from the register itself. A register with no rows still gets a line.
 |---|---|---|
 | `D` | proposed | 9 |
 | `D` | ratified | 1 |
-| `RR` | open | 5 |
+| `RR` | open | 6 |
+| `RR` | resolved | 1 |
 | `O` | closed | 3 |
-| `O` | open | 7 |
-| `H` | not built | 6 |
+| `O` | open | 9 |
+| `H` | built | 6 |
 | `H` | open | 1 |
-| `M` | proposed | 4 |
+| `M` | killed | 4 |
 | `C` | open | 1 |
 | `G` | done | 2 |
 
 ## Hooks
 
-**0 of 7 built.** Prose is advisory; hooks are not. A hook's status is what the register says — this page does not go looking in `scripts/` for a file and infer that the hook works, because a file existing is not evidence that it ever failed.
+**6 of 7 built.** Prose is advisory; hooks are not. A hook's status is what the register says — this page does not go looking in `scripts/` for a file and infer that the hook works, because a file existing is not evidence that it ever failed.
 
 | ID | Hook | Surface | Protects | Status |
 |---|---|---|---|---|
-| H1 | swift test passes | pre-commit + CI | the test gate | not built |
-| H2 | Assertion count not below Tests/ASSERTIONFLOOR | pre-commit + CI | a suite that silently shrank | not built |
-| H3 | No register ID in a commit, branch or PR title | commit-msg | the two-tier grammar | not built |
-| H4 | Harness declared and its commands run | upstream `check_harness.py --run` | an undeclared or dead harness | not built |
+| H1 | swift test passes | pre-commit + CI | the test gate | built |
+| H2 | Assertion count not below Tests/ASSERTIONFLOOR | pre-commit + CI | a suite that silently shrank | built |
+| H3 | No register ID in a commit, branch or PR title | commit-msg | the two-tier grammar | built |
+| H4 | Harness declared and its commands run | upstream `check_harness.py --run` | an undeclared or dead harness | built |
 | H5 | Every FR has a test or a named manual check with evidence | plan review checklist | drift, both directions | open |
-| H6 | Nothing outside the capabilities whitelist is ever written | `swift test` (M1) | the monitor, from a bad write | not built |
-| H7 | Status page regenerates clean | pre-commit + CI | a stale status page | not built |
+| H6 | Nothing outside the capabilities whitelist is ever written | `swift test` (M1, M4) | the monitor, from a bad write | built |
+| H7 | Status page regenerates clean | pre-commit + CI | a stale status page | built |
 
 ## Open, and owned by whom
 
@@ -80,10 +81,11 @@ Every open row in the register. Owner is the row's Owner column where the table 
 |---|---|---|---|---|
 | agent | C1 | P0 | open | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. |
 | agent | RR1 | — | open | IOAVService is undocumented. A macOS update can change or remove it, and an app using it is not App Store eligible. |
-| agent | RR2 | — | open | Single-value DDC reads and writes through BetterDisplay failed on this Mac while the full capabilities scan succeeded. C… |
 | agent | RR4 | — | open | A wrong VCP write can put a monitor into an odd state (factory reset, locked OSD). |
 | human | RR3 | — | open | After switching the monitor to another input, the Mac may lose the DDC channel (some monitors stop answering I2C on an i… |
 | human | RR5 | — | open | Meaning of the G3223D's ten PIP/PBP values (VCP 0xE9) is not documented anywhere the agent could find. |
+| human | RR6 | — | open | The G3223D reports brightness 0/100 and contrast 100/100 and refuses writes to both, while every other code reads correc… |
+| human | RR7 | — | open | Input switching cannot be verified by the agent alone: switching the monitor away from the Mac's input may leave it on a… |
 | owner | D1 | — | proposed | DDC/CI is spoken directly over IOKit's IOAVService I2C interface on Apple silicon, the same path m1ddc and MonitorContro… |
 | owner | D2 | — | proposed | Layout mirrors HueBar and DockWatch: SwitchCore library (no AppKit, fully testable) + thin SwitchBar AppKit executable +… |
 | owner | D3 | — | proposed | The monitor's capabilities string is the whitelist. The app offers and writes only the VCP codes and values it advertise… |
@@ -100,18 +102,10 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | O7 | P2 | open | Create the GitHub repository and say whether it is public or private. C1-T6 waits on it. |
 | owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm SwitchBar's actions are listed; then ask Siri t… |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
-| unassigned | H1 | — | not built | swift test passes |
-| unassigned | H2 | — | not built | Assertion count not below Tests/ASSERTIONFLOOR |
-| unassigned | H3 | — | not built | No register ID in a commit, branch or PR title |
-| unassigned | H4 | — | not built | Harness declared and its commands run |
+| owner | O11 | P1 | open | Look at the Dell's on-screen menu: is Brightness greyed out, and is Smart HDR or a game preset on? Brightness reads 0 an… |
+| owner | O12 | P1 | open | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
-| unassigned | H6 | — | not built | Nothing outside the capabilities whitelist is ever written |
-| unassigned | H7 | — | not built | Status page regenerates clean |
-| unassigned | M1 | — | proposed | Remove the capabilities check before a VCP write |
-| unassigned | M2 | — | proposed | Mis-parse nested parentheses in the capabilities string (vcp(... 60(1B 0F 11 12) ...)) |
-| unassigned | M3 | — | proposed | Read the input code from the high byte of the 0x60 reply instead of the low byte |
-| unassigned | M4 | — | proposed | Let a factory-reset code (0x04, 0x05, 0x08) through when the monitor advertises it |
 
 ---
 
-33 open register rows.
+26 open register rows.
