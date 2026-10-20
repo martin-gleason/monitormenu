@@ -93,8 +93,11 @@ final class MonitorStore {
                     self.readValues(into: &updated[i])
                 }
                 DispatchQueue.main.async {
-                    // Merge by id so a discovery that landed meanwhile is not overwritten.
-                    for u in updated { if let k = self.states.firstIndex(where: { $0.id == u.id }) { self.states[k] = u } }
+                    // Merge by id, and only onto the same Monitor object: a discovery that landed meanwhile
+                    // holds a fresh IOAVService, and the snapshot's stale one would fail with MACH_SEND_INVALID_DEST.
+                    for u in updated {
+                        if let k = self.states.firstIndex(where: { $0.id == u.id }), self.states[k].monitor === u.monitor { self.states[k] = u }
+                    }
                     self.onChange?()
                 }
             }
@@ -128,7 +131,11 @@ final class MonitorStore {
             self.work.async { [weak self] in
                 var err: String?
                 do { try action(monitor) } catch { err = "\(error)" }
-                DispatchQueue.main.async { completion?(err) }
+                DispatchQueue.main.async {
+                    completion?(err)
+                    // A failed transport call usually means the display just reconfigured: look again.
+                    if err != nil { self?.scheduleRediscover() }
+                }
                 self?.refresh(only: id)
             }
         }

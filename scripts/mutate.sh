@@ -14,8 +14,8 @@ case "$id" in
       to='case "(": flushToken(); values = []'
       filter=CapabilitiesTests/testParsesG3223DFixture ;;
   M3) file=Sources/SwitchCore/DDCProtocol.swift
-      from='let current = UInt16(r[8]) << 8 | UInt16(r[9])'
-      to='let current = UInt16(r[6]) << 8 | UInt16(r[7])'
+      from='let current = UInt16(v[8]) << 8 | UInt16(v[9])'
+      to='let current = UInt16(v[6]) << 8 | UInt16(v[7])'
       filter=DDCFrameTests/testCurrentInputIsLowByte ;;
   M4) file=Sources/SwitchCore/Monitor.swift
       from='if VCP.factoryResets.contains(code) { throw'
