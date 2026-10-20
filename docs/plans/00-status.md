@@ -18,6 +18,7 @@ Named, never numbered (`D2`). **No source read here marks a milestone as the cur
 | Milestone | Decisions landing here | Units |
 |---|---|---|
 | MVP | 12 | C1, F1 |
+| v1.0 | 1 | F2 |
 
 ## Features and chores
 
@@ -27,6 +28,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 |---|---|---|---|---|---|---|---|
 | C1 | chore | done 2026-10-19 | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
 | F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass owed (`A2`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
+| F2 | feature | draft, at the gate (`O13`) | v1.0 | — | agent | `docs/plans/F2.md` | 3 planned |
 
 ## Registers
 
@@ -34,32 +36,34 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
-| Decisions (`D`) | 12 | 9 | 0 | 3 |
+| Decisions (`D`) | 13 | 10 | 0 | 3 |
 | Risks (`RR`) | 9 | 6 | 0 | 3 |
-| Owner items (`O`) | 12 | 6 | 0 | 6 |
-| Agent items (`A`) | 2 | 2 | 0 | 0 |
+| Owner items (`O`) | 13 | 6 | 0 | 7 |
+| Agent items (`A`) | 3 | 3 | 0 | 0 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
 | Mutations (`M`) | 6 | 0 | 0 | 6 |
 | Chores (`C`) | 2 | 0 | 0 | 2 |
-| Gates (`G`) | 2 | 0 | 0 | 2 |
+| Gates (`G`) | 3 | 1 | 0 | 2 |
 
 ### By status
 
 | Register | Status | Count |
 |---|---|---|
-| `D` | proposed | 9 |
+| `D` | proposed | 10 |
 | `D` | ratified | 2 |
 | `D` | superseded | 1 |
 | `RR` | open | 6 |
 | `RR` | resolved | 3 |
-| `O` | closed | 6 |
-| `O` | open | 6 |
-| `A` | open | 2 |
+| `O` | closed | 7 |
+| `O` | held | 1 |
+| `O` | open | 5 |
+| `A` | open | 3 |
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 6 |
 | `C` | done | 2 |
 | `G` | done | 2 |
+| `G` | open | 1 |
 
 ## Hooks
 
@@ -96,16 +100,19 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D9 | — | proposed | Built as written; the fallback was not needed — appintentsmetadataprocessor runs from scripts/build-app.sh on the .swift… |
 | owner | D10 | — | proposed | Monitor neutral (NFR8). The HP Omen the owner expects within 90 days of 2026-10-19 is the second test monitor; until it … |
 | owner | D11 | — | proposed | switchctl has no raw set <code> <value>; writes are limited to the spec's controls (input, brightness, contrast, power, … |
-| owner | O2 | P1 | open | Lock the learning level. Agent proposes 5% (Swift is not in the owner's language set; same as HueBar and DockWatch). |
+| owner | D13 | — | proposed | Milestone v1.0 follows MVP and opens with F2, naming monitors (owner, 2026-10-20: "monitormenu should allow for renaming… |
 | owner | O5 | P1 | open | Sit at the G3223D for ten minutes while the agent steps through the 0xE9 values and say what each one shows. Closes RR5.… |
 | owner | O6 | P2 | open | Ratify D1–D6. |
 | owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm SwitchBar's actions are listed; then ask Siri t… |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
-| owner | O12 | P1 | open | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
+| owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
+| owner | O13 | P1 | open | Gate F2 (name your monitors, docs/plans/F2.md) and ratify D13, which also opens milestone v1.0 and adds FR10 to the spec… |
 | unassigned | A1 | P2 | open | Re-create the IOAVService per transaction instead of holding one, so a link retrain never leaves a dead handle and the a… |
 | unassigned | A2 | P1 | open | Second adversarial pass over the post-review fixes (docs/reviews/F1.md § Not re-reviewed). |
+| unassigned | A3 | P0 | open | FR9 defect: the Shortcuts app does not list MonitorMenu's actions. Metadata.appintents has all six actions, both enums a… |
+| unassigned | G3 | — | open | F2 name your monitors |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
 
 ---
 
-24 open register rows.
+27 open register rows.
