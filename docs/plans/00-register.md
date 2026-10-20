@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 20:45 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 20:50 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -74,7 +74,7 @@ Outstanding items only the agent can close: defects in its own work, findings it
 
 | ID | Chore | P | Status | Owner | Plan |
 |---|---|---|---|---|---|
-| C1 | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. | P0 | open — T1–T5 done 2026-10-19, T6 in progress (repo created 2026-10-19) | agent | `docs/plans/C1.md` |
+| C1 | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. | P0 | done 2026-10-19 — CI run 39354005338 green on main; ruleset Rebase-n-Merge active (PR + `test` check + rebase only) | agent | `docs/plans/C1.md` |
 | C2 | Rename SwitchBar → MonitorMenu (D12): directories, identifiers, bundle id, URL scheme, CLI, docs; historical rows untouched. | P1 | done 2026-10-19 | agent | — |
 
 ## Gates (G)
@@ -83,7 +83,7 @@ A gate is an **event**, not a place. It is recorded here so it exists outside th
 
 | ID | Gate | Status | Plan written | Crossed | What the owner said |
 |---|---|---|---|---|---|
-| G1 | C1 harness | done (crossed) | 2026-10-19 | 2026-10-19 | "Go ahead with a monitor neutral native swift app" |
+| G1 | C1 harness | done (crossed; closed 2026-10-19 with CI) | 2026-10-19 | 2026-10-19 | "Go ahead with a monitor neutral native swift app" |
 | G2 | F1 inputs, picture functions and PiP from the menu bar | done (crossed) | 2026-10-19 | 2026-10-19 | "Go ahead with a monitor neutral native swift app" |
 
 ## Hooks (H)
@@ -92,13 +92,13 @@ Deterministic enforcement. Prose is advisory; hooks are not. An `H<n>` is a plan
 
 | ID | Hook | Surface | Protects | Status |
 |---|---|---|---|---|
-| H1 | `swift test` passes | pre-commit + CI | the test gate | built — pre-commit runs it on every commit (C1-T3); CI waits on `O7` (C1-T6) |
-| H2 | Assertion count not below `Tests/ASSERTION_FLOOR` | pre-commit + CI | a suite that silently shrank | built — refused a floor of 17 against 16 on 2026-10-19 (C1-T3) |
+| H1 | `swift test` passes | pre-commit + CI | the test gate | built — pre-commit runs it on every commit (C1-T3); CI run 39354005338 green on main 2026-10-19 (C1-T6) |
+| H2 | Assertion count not below `Tests/ASSERTION_FLOOR` | pre-commit + CI | a suite that silently shrank | built — refused a floor of 17 against 16 on 2026-10-19 (C1-T3); CI step `executed=20 floor=20` (C1-T6) |
 | H3 | No register ID in a commit message, branch or PR title | commit-msg | the two-tier grammar | built — refused `fix(F1): closes D1 and RR2` (subject) and `Closes D1, RR2 and O5.` (body) on 2026-10-19; types limited to the conventions' seven (C1-T3, review X2) |
 | H4 | Harness declared and its commands run | upstream `check_harness.py --run` | an undeclared or dead harness | built — reports `ok switchbar` 2026-10-19 (C1-T5) |
 | H5 | Every FR has a test or a named manual check with evidence | plan review checklist | drift, both directions | open (manual checklist, no mechanism) |
 | H6 | Nothing outside the capabilities whitelist is ever written | `swift test` (M1, M4) | the monitor, from a bad write | built — M1 and M4 killed 2026-10-19 (F1-T1) |
-| H7 | Status page regenerates clean | pre-commit + CI | a stale status page | built — pre-commit runs `gen_status.py --check` (C1-T3); CI waits on `O7` |
+| H7 | Status page regenerates clean | pre-commit + CI | a stale status page | built — pre-commit runs `gen_status.py --check` (C1-T3); needs the upstream generator, so it stays local (C1-T6) |
 
 ## Mutations (M)
 
