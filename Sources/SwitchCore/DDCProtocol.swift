@@ -60,7 +60,9 @@ public enum DDCFrame {
 public struct DDCTiming {
     public var replyDelay: TimeInterval = 0.05
     public var commandGap: TimeInterval = 0.05
-    public var attempts = 3
+    /// Five tries with a doubling pause: a monitor renegotiating its link after a PiP or input change
+    /// answers with null messages for up to a second (observed on the G3223D, 2026-10-19).
+    public var attempts = 5
     public init() {}
 }
 
@@ -87,10 +89,11 @@ public final class DDCMonitorLink {
 
     private func attempt<T>(_ what: String, _ body: () throws -> T) throws -> T {
         var last: Error = DDCError.timeout(what)
+        var backoff = timing.commandGap
         for _ in 0..<max(1, timing.attempts) {
             pace()
             defer { lastCommand = Date() }
-            do { return try body() } catch { last = error; Thread.sleep(forTimeInterval: timing.commandGap) }
+            do { return try body() } catch { last = error; Thread.sleep(forTimeInterval: backoff); backoff = min(backoff * 2, 1.0) }
         }
         throw last
     }

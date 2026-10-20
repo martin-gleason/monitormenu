@@ -6,6 +6,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let menu = NSMenu()
     private let store = MonitorStore()
     private var sliders: [String: SliderMenuItem] = [:]   // "\(id):brightness"
+    private var hotKey: HotKey?
+    private let switcher = SwitcherPanel()
+    private var hotKeySpec: String { UserDefaults.standard.string(forKey: "hotkey") ?? HotKey.defaultSpec }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -17,8 +20,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.autoenablesItems = false
         statusItem.menu = menu
         store.onChange = { [weak self] in self?.rebuild() }
+        Actions.shared = Actions(store: store)
+        Actions.shared.openSwitcher = { [weak self] in self?.openSwitcher() }
+        switcher.onPick = { [weak self] id, code in
+            self?.store.perform(on: id, { try $0.setInput(code) }, completion: self?.report)
+        }
+        // FR9: the default hotkey is live on first launch (D9).
+        hotKey = HotKey(spec: hotKeySpec) { [weak self] in self?.openSwitcher() }
+        if hotKey == nil { NSLog("SwitchBar: hotkey \"%@\" could not be registered", hotKeySpec) }
         store.discover()
         rebuild()
+    }
+
+    /// FR7: switchbar:// URLs from Alfred, Raycast, Shortcuts "Open URL", or a terminal.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            Task { @MainActor in
+                do { NSLog("SwitchBar: %@", try await Actions.shared.handle(url: url)) }
+                catch { self.report(error.localizedDescription) }
+            }
+        }
+    }
+
+    @objc func openSwitcher() {
+        store.refresh()
+        switcher.show(states: store.states)
     }
 
     // FR8: re-read on open. The menu shows the cached state immediately and updates in place.
@@ -93,6 +119,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             menu.addItem(.separator())
         }
+        let sw = NSMenuItem(title: "Input Switcher…", action: #selector(openSwitcher), keyEquivalent: ""); sw.target = self
+        sw.toolTip = "Global hotkey \(HotKey.describe(hotKeySpec))"
+        menu.addItem(sw)
+        let hint = NSMenuItem(title: "Hotkey: \(HotKey.describe(hotKeySpec))", action: nil, keyEquivalent: ""); hint.isEnabled = false; hint.indentationLevel = 1
+        menu.addItem(hint)
         let refresh = NSMenuItem(title: "Rescan Displays", action: #selector(rescan), keyEquivalent: "r"); refresh.target = self
         menu.addItem(refresh)
         let quit = NSMenuItem(title: "Quit SwitchBar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")

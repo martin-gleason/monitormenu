@@ -24,6 +24,10 @@ final class MonitorStore {
     var onChange: (() -> Void)?
     private let work = DispatchQueue(label: "dev.marty.SwitchBar.work", qos: .userInitiated)
     private var rediscoverPending = false
+    /// Capabilities by monitor serial, kept across rediscovery so a monitor that is mid-link-renegotiation
+    /// (PiP on/off and input switches both make macOS reconfigure the display) is not dropped.
+    private var knownCapabilities: [String: Capabilities] = [:]
+    private var emptyRetries = 0
 
     init() {
         CGDisplayRegisterReconfigurationCallback({ _, flags, userInfo in
@@ -46,19 +50,30 @@ final class MonitorStore {
         work.async { [weak self] in
             guard let self else { return }
             var found: [MonitorState] = []
-            for m in MonitorDiscovery.discover() {
+            let discovered = MonitorDiscovery.discover()
+            for m in discovered {
                 var s = MonitorState(monitor: m)
+                let key = m.identity.alphanumericSerial ?? "\(m.identity.vendor)-\(m.identity.model)-\(m.identity.serial)"
                 do {
-                    try m.loadCapabilities()
-                    s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes()
-                    self.readValues(into: &s)
+                    let caps = try m.loadCapabilities()
+                    DispatchQueue.main.async { self.knownCapabilities[key] = caps }
                 } catch {
                     s.lastError = "\(error)"
-                    if m.capabilities == nil { continue }  // not a DDC monitor: not listed
+                    // Not answering right now. Keep it if we have ever read its capabilities; otherwise it is not a DDC monitor.
+                    if let caps = DispatchQueue.main.sync(execute: { self.knownCapabilities[key] }) { m.adopt(capabilities: caps) } else { continue }
                 }
+                s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes()
+                self.readValues(into: &s)
                 found.append(s)
             }
-            DispatchQueue.main.async { self.states = found; self.onChange?() }
+            DispatchQueue.main.async {
+                self.states = found; self.onChange?()
+                // A display came and went during a link renegotiation: look again shortly, a few times.
+                if found.isEmpty, !discovered.isEmpty || self.emptyRetries < 3 {
+                    self.emptyRetries += 1
+                    if self.emptyRetries <= 3 { DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.discover() } }
+                } else { self.emptyRetries = 0 }
+            }
         }
     }
 
@@ -77,6 +92,9 @@ final class MonitorStore {
     private func readValues(into s: inout MonitorState) {
         let m = s.monitor
         s.lastError = nil
+        if m.capabilities == nil, let caps = try? m.loadCapabilities() {
+            s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes(); _ = caps
+        }
         do {
             s.currentInput = try m.currentInput()
             s.brightness = try m.brightness()

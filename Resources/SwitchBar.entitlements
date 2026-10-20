@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Hardened runtime, no App Sandbox: IOAVService I2C is an IOKit user client whose
+	     behaviour under the sandbox is unverified (RR1). Revisit as a chore. -->
+</dict>
+</plist>

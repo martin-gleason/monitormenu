@@ -35,6 +35,9 @@ public final class Monitor {
         return caps
     }
 
+    /// Reuses capabilities read earlier from the same monitor (same serial) when it is not answering right now.
+    public func adopt(capabilities caps: Capabilities) { capabilities = caps }
+
     public func get(_ code: UInt8) throws -> DDCFrame.VCPReply { try link.read(code) }
 
     /// The only write path. Refuses anything the monitor did not advertise (NFR5, M1, M4).
