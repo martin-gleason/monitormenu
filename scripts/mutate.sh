@@ -21,10 +21,19 @@ case "$id" in
       from='if VCP.factoryResets.contains(code) { throw'
       to='if false { throw'
       filter=WhitelistTests/testFactoryResetCodesAreNeverOffered ;;
-  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4"; exit 2 ;;
+  M5) file=Sources/SwitchCore/DDCProtocol.swift
+      from='guard replyChecksum(r[0..<(total - 1)]) == r[total - 1] else'
+      to='guard true else'
+      filter=DDCFrameTests/testChecksumMismatchIsRejected ;;
+  M6) file=Sources/SwitchCore/I2CChannel.swift
+      from='guard done.wait(timeout: .now() + timeout) == .success, let r = result else'
+      to='done.wait(); guard let r = result else'
+      filter=DDCFrameTests/testDeadlineChannelTimesOut ;;
+  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4|M5|M6"; exit 2 ;;
 esac
 if ! git diff --quiet -- "$file"; then echo "$file has uncommitted changes; refusing to mutate"; exit 2; fi
 if ! grep -qF -- "$from" "$file"; then echo "$id: pattern not found in $file — the mutation no longer applies"; exit 2; fi
+trap 'git checkout -- "$file" 2>/dev/null' EXIT INT TERM   # never leave the break applied (review X3)
 python3 -c 'import sys,pathlib; p=pathlib.Path(sys.argv[1]); t=p.read_text(); p.write_text(t.replace(sys.argv[2], sys.argv[3], 1))' "$file" "$from" "$to"
 grep -qF -- "$to" "$file" || { git checkout -- "$file"; echo "$id: mutation did not apply"; exit 2; }
 echo "== $id applied to $file; running $filter (expect failures) =="

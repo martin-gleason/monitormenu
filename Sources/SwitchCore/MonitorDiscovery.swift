@@ -25,7 +25,7 @@ public enum MonitorDiscovery {
             usedDisplays.insert(disp.order)
             guard let av = IOAVServiceCreateWithService(kCFAllocatorDefault, svc.service)?.takeRetainedValue() else { IOObjectRelease(svc.service); continue }
             IOObjectRelease(svc.service)
-            let link = DDCMonitorLink(channel: IOAVServiceChannel(service: av), label: disp.key ?? "\(disp.order)")
+            let link = DDCMonitorLink(channel: DeadlineChannel(IOAVServiceChannel(service: av)), label: disp.key ?? "\(disp.order)")
             monitors.append(Monitor(identity: disp.identity, link: link))
         }
         for d in displays where !usedDisplays.contains(d.order) { _ = d }  // displays without DDC are not listed (FR1)
@@ -106,7 +106,8 @@ public enum MonitorDiscovery {
         guard CGGetOnlineDisplayList(16, &ids, &n) == .success else { return nil }
         let online = ids.prefix(Int(n)).filter { CGDisplayIsBuiltin($0) == 0 }
         if let exact = online.first(where: { CGDisplayVendorNumber($0) == vendor && CGDisplayModelNumber($0) == model && CGDisplaySerialNumber($0) == serial }) { return exact }
-        if let sameModel = online.first(where: { CGDisplayVendorNumber($0) == vendor && CGDisplayModelNumber($0) == model }) { return sameModel }
-        return nil
+        // Serial mismatch (some monitors report 0 to CoreGraphics): accept the model only when it is the one of its kind.
+        let sameModel = online.filter { CGDisplayVendorNumber($0) == vendor && CGDisplayModelNumber($0) == model }
+        return sameModel.count == 1 ? sameModel[0] : nil
     }
 }

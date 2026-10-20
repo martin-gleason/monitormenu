@@ -6,6 +6,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let menu = NSMenu()
     private let store = MonitorStore()
     private var sliders: [String: SliderMenuItem] = [:]   // "\(id):brightness"
+    private var checkItems: [String: NSMenuItem] = [:]    // "\(id):input:\(code)", "\(id):pip:\(code)"
+    private var menuOpen = false
+    private var rebuildWhenClosed = false
     private var hotKey: HotKey?
     private let switcher = SwitcherPanel()
     private var hotKeySpec: String { UserDefaults.standard.string(forKey: "hotkey") ?? HotKey.defaultSpec }
@@ -48,11 +51,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     // FR8: re-read on open. The menu shows the cached state immediately and updates in place.
-    func menuWillOpen(_ menu: NSMenu) { store.refresh() }
+    func menuWillOpen(_ menu: NSMenu) { menuOpen = true; store.refresh() }
+    func menuDidClose(_ menu: NSMenu) {
+        menuOpen = false
+        if rebuildWhenClosed { rebuildWhenClosed = false; rebuild() }
+    }
 
+    /// While the menu is open, tearing items down would kill a slider mid-drag; update values in place
+    /// and defer structural changes (a monitor appearing or disappearing) until it closes.
     private func rebuild() {
+        if menuOpen {
+            let structureChanged = store.states.count != sliders.count / 2 && !(store.states.isEmpty && sliders.isEmpty)
+            if structureChanged { rebuildWhenClosed = true }
+            updateInPlace()
+            return
+        }
+        rebuildNow()
+    }
+
+    private func updateInPlace() {
+        for s in store.states {
+            sliders["\(s.id):brightness"]?.set(current: s.brightness?.current ?? 0, max: s.brightness?.max ?? 100, enabled: s.brightness != nil)
+            sliders["\(s.id):contrast"]?.set(current: s.contrast?.current ?? 0, max: s.contrast?.max ?? 100, enabled: s.contrast != nil)
+            for code in s.inputs { checkItems["\(s.id):input:\(code)"]?.state = s.currentInput == code ? .on : .off }
+            for mode in s.pipModes { checkItems["\(s.id):pip:\(mode)"]?.state = s.pipMode == mode ? .on : .off }
+        }
+    }
+
+    private func rebuildNow() {
         menu.removeAllItems()
         sliders.removeAll()
+        checkItems.removeAll()
         if store.states.isEmpty {
             let i = NSMenuItem(title: "No DDC-capable monitor found", action: nil, keyEquivalent: ""); i.isEnabled = false
             menu.addItem(i)
@@ -68,6 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 i.target = self; i.indentationLevel = 1
                 i.representedObject = Action(id: s.id, code: code)
                 i.state = s.currentInput == code ? .on : .off
+                checkItems["\(s.id):input:\(code)"] = i
                 menu.addItem(i)
             }
 
@@ -90,9 +120,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 for mode in s.pipModes {
                     let i = NSMenuItem(title: VCP.label(code: VCP.pipMode, value: mode), action: #selector(pickPiP(_:)), keyEquivalent: "")
                     i.target = self; i.representedObject = Action(id: s.id, code: mode); i.state = s.pipMode == mode ? .on : .off
+                    checkItems["\(s.id):pip:\(mode)"] = i
                     sub.addItem(i)
                 }
-                if s.monitor.capabilities?.advertises(VCP.pipSource) == true, !s.inputs.isEmpty {
+                if s.monitor.hasPiPSource, !s.inputs.isEmpty {
                     sub.addItem(.separator())
                     let src = NSMenuItem(title: "Second Source", action: nil, keyEquivalent: "")
                     let srcMenu = NSMenu(); srcMenu.autoenablesItems = false

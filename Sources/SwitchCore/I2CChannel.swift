@@ -32,6 +32,28 @@ public enum DDCError: Error, Equatable, CustomStringConvertible {
     }
 }
 
+/// Wraps any channel with a deadline (NFR4): a call that never returns is abandoned with
+/// `DDCError.timeout` instead of stalling every later action. The abandoned call finishes on its
+/// own on a concurrent I/O queue; nothing waits for it.
+public final class DeadlineChannel: I2CChannel {
+    private let inner: I2CChannel
+    public let timeout: TimeInterval
+    private static let io = DispatchQueue(label: "dev.marty.SwitchBar.i2c", qos: .userInitiated, attributes: .concurrent)
+
+    public init(_ inner: I2CChannel, timeout: TimeInterval = 1.0) { self.inner = inner; self.timeout = timeout }
+
+    private func withDeadline<T>(_ what: String, _ body: @escaping () throws -> T) throws -> T {
+        let done = DispatchSemaphore(value: 0)
+        var result: Result<T, Error>?
+        Self.io.async { result = Result { try body() }; done.signal() }
+        guard done.wait(timeout: .now() + timeout) == .success, let r = result else { throw DDCError.timeout(what) }
+        return try r.get()
+    }
+
+    public func write(_ bytes: [UInt8]) throws { let i = inner; try withDeadline("I2C write") { try i.write(bytes) } }
+    public func read(count: Int) throws -> [UInt8] { let i = inner; return try withDeadline("I2C read") { try i.read(count: count) } }
+}
+
 /// DDC/CI over IOKit's IOAVService I2C bridge (D1). Chip address 0x37, sub-address 0x51.
 public final class IOAVServiceChannel: I2CChannel {
     private let service: IOAVService
@@ -42,17 +64,13 @@ public final class IOAVServiceChannel: I2CChannel {
 
     public func write(_ bytes: [UInt8]) throws {
         var buf = bytes
-        let rc = buf.withUnsafeMutableBytes { raw in
-            IOAVServiceWriteI2C(service, Self.chip, Self.sub, raw.baseAddress, UInt32(raw.count))
-        }
+        let rc = buf.withUnsafeMutableBytes { raw in IOAVServiceWriteI2C(service, Self.chip, Self.sub, raw.baseAddress, UInt32(raw.count)) }
         if rc != KERN_SUCCESS { throw DDCError.ioFailed("I2C write", rc) }
     }
 
     public func read(count: Int) throws -> [UInt8] {
-        var buf = [UInt8](repeating: 0, count: count)
-        let rc = buf.withUnsafeMutableBytes { raw in
-            IOAVServiceReadI2C(service, Self.chip, Self.sub, raw.baseAddress, UInt32(raw.count))
-        }
+        var buf = [UInt8](repeating: 0, count: max(1, min(count, 256)))
+        let rc = buf.withUnsafeMutableBytes { raw in IOAVServiceReadI2C(service, Self.chip, Self.sub, raw.baseAddress, UInt32(raw.count)) }
         if rc != KERN_SUCCESS { throw DDCError.ioFailed("I2C read", rc) }
         return buf
     }

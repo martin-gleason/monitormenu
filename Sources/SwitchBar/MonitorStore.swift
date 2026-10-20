@@ -49,7 +49,10 @@ final class MonitorStore {
     func discover() {
         work.async { [weak self] in
             guard let self else { return }
+            // Note: main must never block on the work queue, or the `main.sync` below deadlocks. It does not: all
+            // DDC work is dispatched asynchronously from main.
             var found: [MonitorState] = []
+            let known = DispatchQueue.main.sync { self.knownCapabilities }   // one hop, before any DDC work
             let discovered = MonitorDiscovery.discover()
             for m in discovered {
                 var s = MonitorState(monitor: m)
@@ -60,7 +63,7 @@ final class MonitorStore {
                 } catch {
                     s.lastError = "\(error)"
                     // Not answering right now. Keep it if we have ever read its capabilities; otherwise it is not a DDC monitor.
-                    if let caps = DispatchQueue.main.sync(execute: { self.knownCapabilities[key] }) { m.adopt(capabilities: caps) } else { continue }
+                    if let caps = known[key] { m.adopt(capabilities: caps) } else { continue }
                 }
                 s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes()
                 self.readValues(into: &s)
@@ -78,39 +81,56 @@ final class MonitorStore {
     }
 
     /// Re-reads live values for every monitor (menu open, after an action) — FR8.
+    /// `states` belongs to the main thread: snapshot there, work on the copy, publish back on main.
     func refresh(only id: CGDirectDisplayID? = nil) {
-        work.async { [weak self] in
+        onMain { [weak self] in
             guard let self else { return }
-            var updated = self.states
-            for i in updated.indices where id == nil || updated[i].id == id {
-                self.readValues(into: &updated[i])
+            let snapshot = self.states
+            self.work.async { [weak self] in
+                guard let self else { return }
+                var updated = snapshot
+                for i in updated.indices where id == nil || updated[i].id == id {
+                    self.readValues(into: &updated[i])
+                }
+                DispatchQueue.main.async {
+                    // Merge by id so a discovery that landed meanwhile is not overwritten.
+                    for u in updated { if let k = self.states.firstIndex(where: { $0.id == u.id }) { self.states[k] = u } }
+                    self.onChange?()
+                }
             }
-            DispatchQueue.main.async { self.states = updated; self.onChange?() }
         }
+    }
+
+    private func onMain(_ body: @escaping () -> Void) {
+        if Thread.isMainThread { body() } else { DispatchQueue.main.async(execute: body) }
     }
 
     private func readValues(into s: inout MonitorState) {
         let m = s.monitor
         s.lastError = nil
-        if m.capabilities == nil, let caps = try? m.loadCapabilities() {
-            s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes(); _ = caps
+        if m.capabilities == nil, (try? m.loadCapabilities()) != nil {
+            s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes()
         }
         do {
             s.currentInput = try m.currentInput()
             s.brightness = try m.brightness()
             s.contrast = try m.contrast()
-            if m.hasPiP { s.pipMode = UInt8((try m.get(VCP.pipMode)).current & 0xFF) }
+            if m.hasPiP { s.pipMode = try m.currentPiPMode() }
         } catch { s.lastError = "\(error)" }
     }
 
     /// Every action funnels through here: write on the queue, then re-read that monitor (FR8).
     func perform(on id: CGDirectDisplayID, _ action: @escaping (Monitor) throws -> Void, completion: ((String?) -> Void)? = nil) {
-        guard let s = states.first(where: { $0.id == id }) else { completion?("monitor is gone"); return }
-        work.async { [weak self] in
-            var err: String?
-            do { try action(s.monitor) } catch { err = "\(error)" }
-            DispatchQueue.main.async { completion?(err) }
-            self?.refresh(only: id)
+        onMain { [weak self] in
+            guard let self else { return }
+            guard let s = self.states.first(where: { $0.id == id }) else { completion?("monitor is gone"); return }
+            let monitor = s.monitor
+            self.work.async { [weak self] in
+                var err: String?
+                do { try action(monitor) } catch { err = "\(error)" }
+                DispatchQueue.main.async { completion?(err) }
+                self?.refresh(only: id)
+            }
         }
     }
 }

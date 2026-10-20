@@ -9,6 +9,28 @@ public enum VCP {
     public static let powerMode: UInt8 = 0xD6
     public static let pipMode: UInt8 = 0xE9      // Dell PIP/PBP layout (vendor-specific range)
     public static let pipSource: UInt8 = 0xEA    // Dell PIP/PBP secondary input
+
+    /// PiP/PbP lives in the vendor-specific VCP range, so the codes are per manufacturer (NFR8).
+    /// Keyed by the EDID manufacturer id (Dell = 0x10AC). A vendor absent here has no PiP item until
+    /// a mapping is added; HP's codes are unknown until the Omen arrives (D10).
+    public static let vendorPiPCodes: [UInt32: (mode: UInt8, source: UInt8)] = [
+        0x10AC: (0xE9, 0xEA),
+    ]
+    public static func pipCodes(vendor: UInt32) -> (mode: UInt8, source: UInt8)? { vendorPiPCodes[vendor] }
+
+    /// off · small · large · split (also pip/on/pbp/half) · 0xNN · decimal → the PiP mode value.
+    public static func pipCode(from text: String) -> UInt8? {
+        let key = text.lowercased().trimmingCharacters(in: .whitespaces)
+        switch key {
+        case "off", "0": return 0x00
+        case "small", "pip", "on": return 0x21
+        case "large": return 0x22
+        case "split", "pbp", "half": return 0x24
+        default:
+            if key.hasPrefix("0x"), let v = UInt8(key.dropFirst(2), radix: 16) { return v }
+            return UInt8(key)
+        }
+    }
     public static let factoryResets: Set<UInt8> = [0x04, 0x05, 0x06, 0x08, 0x0A]  // never offered (NFR5)
 
     /// MCCS 2.2 input source values (table 7.3). Low byte of VCP 0x60.

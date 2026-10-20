@@ -36,6 +36,16 @@ final class WhitelistTests: XCTestCase {
         XCTAssertTrue(ch.writes.isEmpty)
     }
 
+    /// Review C8: a continuous code is bounded by the maximum the monitor last reported.
+    func testContinuousValueAboveReportedMaximumIsRefused() throws {
+        let ch = RecordingChannel(); ch.replies = [Fixtures.replyRedGain]          // 0x16: max 100
+        let (m, _) = Fixtures.monitor(caps: Fixtures.g3223d, channel: ch)
+        _ = try m.get(0x16)
+        XCTAssertThrowsError(try m.set(0x16, 101)) { XCTAssertEqual($0 as? DDCError, .valueNotAdvertised(code: 0x16, value: 101)) }
+        XCTAssertNoThrow(try m.set(0x16, 100))
+        XCTAssertEqual(ch.writes.count, 2, "one get request, one accepted write")
+    }
+
     func testNoCapabilitiesMeansNoWrites() {
         let link = DDCMonitorLink(channel: RecordingChannel(), label: "t")
         let m = Monitor(identity: MonitorIdentity(name: "x", vendor: 0, model: 0, serial: 0), link: link)

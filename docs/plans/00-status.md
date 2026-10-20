@@ -26,7 +26,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 | ID | Kind | Status | Milestone | P | Owner | Plan | Tasks |
 |---|---|---|---|---|---|---|---|
 | C1 | chore | in progress (gate crossed 2026-10-19) — T1–T5 done 2026-10-19, T6 waits on `O7` | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
-| F1 | feature | in progress (gate crossed 2026-10-19) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
+| F1 | feature | built 2026-10-19; live checks that need a person at the desk remain open (`O9`, `O11`, `O12`); adversarial review pending | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
 
 ## Registers
 
@@ -35,7 +35,7 @@ Counted from the register itself. A register with no rows still gets a line.
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
 | Decisions (`D`) | 10 | 9 | 0 | 1 |
-| Risks (`RR`) | 7 | 6 | 0 | 1 |
+| Risks (`RR`) | 9 | 7 | 0 | 2 |
 | Owner items (`O`) | 12 | 9 | 0 | 3 |
 | Agent items (`A`) | 0 | 0 | 0 | 0 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
@@ -49,8 +49,8 @@ Counted from the register itself. A register with no rows still gets a line.
 |---|---|---|
 | `D` | proposed | 9 |
 | `D` | ratified | 1 |
-| `RR` | open | 6 |
-| `RR` | resolved | 1 |
+| `RR` | open | 7 |
+| `RR` | resolved | 2 |
 | `O` | closed | 3 |
 | `O` | open | 9 |
 | `H` | built | 6 |
@@ -82,6 +82,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | agent | C1 | P0 | open | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. |
 | agent | RR1 | — | open | IOAVService is undocumented. A macOS update can change or remove it, and an app using it is not App Store eligible. |
 | agent | RR4 | — | open | A wrong VCP write can put a monitor into an odd state (factory reset, locked OSD). |
+| agent | RR8 | — | open | switchctl and the app share one I2C bus. Both transacting at the same instant corrupts one side's read (observed: switch… |
 | human | RR3 | — | open | After switching the monitor to another input, the Mac may lose the DDC channel (some monitors stop answering I2C on an i… |
 | human | RR5 | — | open | Meaning of the G3223D's ten PIP/PBP values (VCP 0xE9) is not documented anywhere the agent could find. |
 | human | RR6 | — | open | The G3223D reports brightness 0/100 and contrast 100/100 and refuses writes to both, while every other code reads correc… |
@@ -93,7 +94,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D5 | — | proposed | Name: SwitchBar, bundle id dev.marty.SwitchBar, repo martin-gleason/switchbar. Chosen by the agent; the owner may rename… |
 | owner | D6 | — | proposed | External automation surface is a switchbar:// URL scheme plus the switchctl binary. Both call the same SwitchCore action… |
 | owner | D7 | — | proposed | Prior art reviewed 2026-10-19 (docs/learnings/2026-10-19-prior-art.md). SwitchBar's uncovered ground is PiP/PbP from the… |
-| owner | D9 | — | proposed | "Shortcut" means four surfaces, all calling the same SwitchCore actions: a global hotkey (Carbon RegisterEventHotKey, de… |
+| owner | D9 | — | proposed | Built as written; the fallback was not needed — appintentsmetadataprocessor runs from scripts/build-app.sh on the .swift… |
 | owner | D10 | — | proposed | Monitor neutral (NFR8). The HP Omen the owner expects within 90 days of 2026-10-19 is the second test monitor; until it … |
 | owner | O2 | P1 | open | Lock the learning level. Agent proposes 5% (Swift is not in the owner's language set; same as HueBar and DockWatch). |
 | owner | O4 | P2 | open | Confirm the name SwitchBar or pick another (D5). |
@@ -108,4 +109,4 @@ Every open row in the register. Owner is the row's Owner column where the table 
 
 ---
 
-26 open register rows.
+27 open register rows.

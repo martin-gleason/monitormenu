@@ -66,17 +66,7 @@ final class Actions {
     @discardableResult
     func setPiP(_ text: String, monitor: String? = nil) async throws -> (monitor: String, mode: String) {
         let s = try resolve(monitor)
-        let key = text.lowercased()
-        let code: UInt8
-        switch key {
-        case "off", "0": code = 0x00
-        case "small", "pip", "on": code = 0x21
-        case "large": code = 0x22
-        case "split", "pbp", "half": code = 0x24
-        default:
-            if key.hasPrefix("0x"), let v = UInt8(key.dropFirst(2), radix: 16) { code = v }
-            else if let v = UInt8(key) { code = v } else { throw ActionError.badValue(text) }
-        }
+        guard let code = VCP.pipCode(from: text) else { throw ActionError.badValue(text) }
         try await run(s.id) { try $0.setPiPMode(code) }
         return (s.name, VCP.label(code: VCP.pipMode, value: code))
     }

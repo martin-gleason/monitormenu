@@ -9,8 +9,11 @@ import SwitchCore
 //   switchctl set input <hdmi1|hdmi2|dp1|dp2|usbc|0xNN> [--display X]
 //   switchctl set <brightness|contrast> <0-100> [--display X]
 //   switchctl set power <standby|on|0xNN> [--display X]
-//   switchctl set pip <off|0xNN> [--display X]     switchctl set pip-source <input> [--display X]
+//   switchctl set pip <off|small|large|split|0xNN> [--display X]    switchctl set pip-source <input> [--display X]
 //   switchctl probe [--display X] [--count N]       RR2: read reliability over N reads
+//
+// `get <hex code>` reads any code for diagnosis. There is deliberately no raw `set <code> <value>`:
+// writes are limited to the spec's FR2–FR5 controls (review K2, 2026-10-19).
 //
 // --display X matches the monitor's name (substring, case-insensitive) or its CoreGraphics id.
 
@@ -27,7 +30,7 @@ func fail(_ msg: String) -> Never { FileHandle.standardError.write(Data((msg + "
 
 let displaySel = takeOption("--display")
 let json = takeFlag("--json")
-let count = Int(takeOption("--count") ?? "") ?? 100
+let count = max(1, min(10_000, Int(takeOption("--count") ?? "") ?? 100))
 let verb = args.first ?? "list"
 
 let monitors = MonitorDiscovery.discover()
@@ -81,7 +84,7 @@ case "get":
         case "contrast": let r = try m.contrast(); print(r.current)
         case "input": let i = try m.currentInput(); print("\(VCP.label(code: VCP.inputSource, value: i)) (\(hex(i)))")
         case "power": let r = try m.get(VCP.powerMode); print(VCP.label(code: VCP.powerMode, value: UInt8(r.current & 0xFF)))
-        case "pip": let r = try m.get(VCP.pipMode); print("\(VCP.label(code: VCP.pipMode, value: UInt8(r.current & 0xFF))) (\(hex(UInt8(r.current & 0xFF))))")
+        case "pip": let v = try m.currentPiPMode(); print("\(VCP.label(code: VCP.pipMode, value: v)) (\(hex(v)))")
         default:
             guard let code = UInt8(args[1].replacingOccurrences(of: "0x", with: ""), radix: 16) else { fail("unknown property \(args[1])") }
             let r = try m.get(code); print("current \(r.current) max \(r.maximum)")
@@ -102,14 +105,12 @@ case "set":
             let v: UInt8 = args[2] == "standby" ? 0x04 : args[2] == "on" ? 0x01 : args[2] == "off" ? 0x05 : UInt8(args[2].replacingOccurrences(of: "0x", with: ""), radix: 16) ?? 0
             try m.setPower(v); print("\(m.name): power → \(VCP.label(code: VCP.powerMode, value: v))")
         case "pip":
-            let v: UInt8 = args[2] == "off" ? 0 : UInt8(args[2].replacingOccurrences(of: "0x", with: ""), radix: 16) ?? 0xFF
+            guard let v = VCP.pipCode(from: args[2]) else { fail("unknown pip mode \(args[2]) — off, small, large, split, or 0xNN") }
             try m.setPiPMode(v); print("\(m.name): pip → \(VCP.label(code: VCP.pipMode, value: v))")
         case "pip-source":
             guard let code = VCP.inputCode(from: args[2]) else { fail("unknown input \(args[2])") }
             try m.setPiPSource(code); print("\(m.name): pip source → \(VCP.label(code: VCP.inputSource, value: code))")
-        default:
-            guard let code = UInt8(args[1].replacingOccurrences(of: "0x", with: ""), radix: 16), let v = UInt16(args[2]) else { fail("set <code> <value>") }
-            try m.set(code, v); print("\(m.name): \(hex(code)) → \(v)")
+        default: fail("set input|brightness|contrast|power|pip|pip-source — raw codes are read-only (`get 0xNN`)")
         }
     } catch { fail("\(m.name): \(error)") }
 
@@ -121,7 +122,7 @@ case "probe":
         if (try? m.brightness()) != nil { ok += 1; ms.append(Date().timeIntervalSince(t) * 1000) } else { fails += 1 }
     }
     let avg = ms.isEmpty ? 0 : ms.reduce(0, +) / Double(ms.count)
-    print("\(m.name): \(ok)/\(count) reads succeeded, \(fails) failed, mean \(String(format: "%.0f", avg)) ms per read (3 attempts max each)")
+    print("\(m.name): \(ok)/\(count) reads succeeded, \(fails) failed, mean \(String(format: "%.0f", avg)) ms per read (\(m.link.timing.attempts) attempts max each)")
 
 default:
     fail("usage: switchctl list|capabilities|get|set|probe  (see source header)")

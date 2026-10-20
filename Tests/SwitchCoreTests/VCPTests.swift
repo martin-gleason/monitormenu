@@ -19,6 +19,21 @@ final class VCPTests: XCTestCase {
         XCTAssertEqual(VCP.label(code: VCP.powerMode, value: 0x04), "Off (standby)")
     }
 
+    func testPiPAliasesAndVendorCodes() {
+        XCTAssertEqual(VCP.pipCode(from: "small"), 0x21)
+        XCTAssertEqual(VCP.pipCode(from: "split"), 0x24)
+        XCTAssertEqual(VCP.pipCode(from: "off"), 0)
+        XCTAssertEqual(VCP.pipCode(from: "0x2E"), 0x2E)
+        XCTAssertNil(VCP.pipCode(from: "sideways"))
+        XCTAssertEqual(VCP.pipCodes(vendor: 0x10AC)?.mode, 0xE9, "Dell")
+        XCTAssertNil(VCP.pipCodes(vendor: 0x22F0), "HP: unknown until the Omen arrives (NFR8)")
+        // A Dell fixture has PiP; the same capabilities under an unknown vendor do not (FR4, NFR8).
+        let dell = Monitor(identity: MonitorIdentity(name: "d", vendor: 0x10AC, model: 1, serial: 1), link: DDCMonitorLink(channel: RecordingChannel(), label: "d"), capabilities: Capabilities.parse(Fixtures.g3223d))
+        XCTAssertTrue(dell.hasPiP); XCTAssertEqual(dell.pipModes().count, 10)
+        let other = Monitor(identity: MonitorIdentity(name: "o", vendor: 0x22F0, model: 1, serial: 1), link: DDCMonitorLink(channel: RecordingChannel(), label: "o"), capabilities: Capabilities.parse(Fixtures.g3223d))
+        XCTAssertFalse(other.hasPiP); XCTAssertThrowsError(try other.setPiPMode(0x21))
+    }
+
     func testDiscoveryKeyParsing() {
         XCTAssertEqual(MonitorDiscovery.displayKey(fromName: "dispext0:dcpav-service-epic:0"), "dispext0")
         XCTAssertEqual(MonitorDiscovery.displayKey(fromName: "dispext0@88000000"), "dispext0")

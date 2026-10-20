@@ -34,6 +34,7 @@ final class SwitcherPanel: NSPanel {
     override func cancelOperation(_ sender: Any?) { close() }
 }
 
+/// Rows are laid out top-down in monitor order, then input order; row k (1-based) is what key k picks.
 final class SwitcherView: NSView {
     var states: [MonitorState] = [] { didSet { rebuild() } }
     var onPick: ((CGDirectDisplayID, UInt8) -> Void)?
@@ -42,43 +43,31 @@ final class SwitcherView: NSView {
     private(set) var preferredHeight: CGFloat = 60
 
     override var acceptsFirstResponder: Bool { true }
+    override var isFlipped: Bool { true }   // y grows downward, so "top-down" is literal
 
     private func rebuild() {
         subviews.forEach { $0.removeFromSuperview() }
         rows = []
-        var y: CGFloat = 12
-        var items: [(NSView, CGFloat)] = []
-        var n = 0
-        for s in states.reversed() {
-            var lines: [(NSView, CGFloat)] = []
-            for code in s.inputs {
-                n += 1
-                let active = s.currentInput == code
-                let b = NSButton(title: "\(n)   \(VCP.label(code: VCP.inputSource, value: code))\(active ? "   ●" : "")", target: self, action: #selector(click(_:)))
-                b.bezelStyle = .inline; b.isBordered = false; b.alignment = .left
-                b.font = .systemFont(ofSize: 13, weight: active ? .semibold : .regular)
-                b.tag = rows.count; b.contentTintColor = .labelColor
-                rows.append((s.id, code))
-                lines.append((b, 24))
-            }
+        var y: CGFloat = 10
+        func place(_ v: NSView, height: CGFloat) { v.frame = NSRect(x: 16, y: y, width: 288, height: height - 4); addSubview(v); y += height }
+        for s in states {
             let header = NSTextField(labelWithString: s.name)
             header.font = .systemFont(ofSize: 11, weight: .semibold); header.textColor = .secondaryLabelColor
-            lines.append((header, 20))
-            items.append(contentsOf: lines)
+            place(header, height: 20)
+            for code in s.inputs {
+                rows.append((s.id, code))
+                let active = s.currentInput == code
+                let b = NSButton(title: "\(rows.count)   \(VCP.label(code: VCP.inputSource, value: code))\(active ? "   ●" : "")", target: self, action: #selector(click(_:)))
+                b.bezelStyle = .inline; b.isBordered = false; b.alignment = .left
+                b.font = .systemFont(ofSize: 13, weight: active ? .semibold : .regular)
+                b.tag = rows.count - 1; b.contentTintColor = .labelColor
+                place(b, height: 24)
+            }
         }
-        if rows.isEmpty { items.append((NSTextField(labelWithString: "No DDC-capable monitor connected"), 24)) }
+        if rows.isEmpty { place(NSTextField(labelWithString: "No DDC-capable monitor connected"), height: 24) }
         let hint = NSTextField(labelWithString: "Press a number · Esc to close"); hint.font = .systemFont(ofSize: 10); hint.textColor = .tertiaryLabelColor
-        var all: [(NSView, CGFloat)] = [(hint, 18)]
-        all.append(contentsOf: items)
-        for (v, h) in all { v.frame = NSRect(x: 16, y: y, width: 288, height: h - 4); addSubview(v); y += h }
-        preferredHeight = y + 8
-        // Number the rows top-down.
-        var k = 1
-        for v in subviews.reversed() where v is NSButton {
-            let b = v as! NSButton
-            let title = b.title.drop { $0 != " " }
-            b.title = "\(k)\(title)"; k += 1
-        }
+        place(hint, height: 18)
+        preferredHeight = y + 6
     }
 
     @objc private func click(_ sender: NSButton) {
@@ -88,10 +77,7 @@ final class SwitcherView: NSView {
 
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 53 { onCancel?(); return }  // Esc
-        guard let ch = event.charactersIgnoringModifiers, let n = Int(ch), n >= 1 else { super.keyDown(with: event); return }
-        // Visible numbering is top-down; rows were built bottom-up.
-        let ordered = Array(rows.reversed())
-        guard n <= ordered.count else { return }
-        onPick?(ordered[n - 1].id, ordered[n - 1].code)
+        guard let ch = event.charactersIgnoringModifiers, let n = Int(ch), n >= 1, n <= rows.count else { super.keyDown(with: event); return }
+        onPick?(rows[n - 1].id, rows[n - 1].code)
     }
 }

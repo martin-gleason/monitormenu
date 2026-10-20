@@ -14,10 +14,13 @@ enum Fixtures {
     static let replyInputUSBC: [UInt8]  = [0x6E, 0x88, 0x02, 0x00, 0x60, 0x00, 0x1B, 0x1B, 0x1B, 0x1B, 0xD4]
     static let replyRedGain: [UInt8]    = [0x6E, 0x88, 0x02, 0x00, 0x16, 0x00, 0x00, 0x64, 0x00, 0x64, 0xA2]
 
+    /// Appends the DDC reply checksum (0x50 ^ every byte) so hand-built replies pass validation.
+    static func sealed(_ bytes: [UInt8]) -> [UInt8] { bytes + [DDCFrame.replyChecksum(bytes[...])] }
+
     static func monitor(caps: String, channel: RecordingChannel = RecordingChannel()) -> (Monitor, RecordingChannel) {
         let link = DDCMonitorLink(channel: channel, label: "test")
         link.timing.replyDelay = 0; link.timing.commandGap = 0; link.timing.attempts = 1
-        let id = MonitorIdentity(name: "Test", vendor: 1, model: 2, serial: 3)
+        let id = MonitorIdentity(name: "Test", vendor: 0x10AC, model: 2, serial: 3)   // Dell, so PiP codes resolve
         return (Monitor(identity: id, link: link, capabilities: Capabilities.parse(caps)), channel)
     }
 }
