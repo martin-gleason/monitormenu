@@ -30,8 +30,10 @@ final class MonitorStore {
     private var emptyRetries = 0
 
     init() {
+        // Any completed reconfiguration — a PiP or input change is a mode change, not an add or remove —
+        // can replace the display's IOAVService, so every "after" event triggers a (debounced) rediscovery.
         CGDisplayRegisterReconfigurationCallback({ _, flags, userInfo in
-            guard flags.contains(.addFlag) || flags.contains(.removeFlag) || flags.contains(.disabledFlag) || flags.contains(.enabledFlag), let info = userInfo else { return }
+            guard !flags.contains(.beginConfigurationFlag), let info = userInfo else { return }
             Unmanaged<MonitorStore>.fromOpaque(info).takeUnretainedValue().scheduleRediscover()
         }, Unmanaged.passUnretained(self).toOpaque())
     }
@@ -49,8 +51,21 @@ final class MonitorStore {
     func discover() {
         work.async { [weak self] in
             guard let self else { return }
-            // Note: main must never block on the work queue, or the `main.sync` below deadlocks. It does not: all
-            // DDC work is dispatched asynchronously from main.
+            let found = self.discoverSync()
+            DispatchQueue.main.async {
+                self.states = found; self.onChange?()
+                // A display came and went during a link renegotiation: look again shortly, a few times.
+                if found.isEmpty, self.emptyRetries < 3 {
+                    self.emptyRetries += 1
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.discover() }
+                } else { self.emptyRetries = 0 }
+            }
+        }
+    }
+
+    /// Runs on the work queue. Main must never block on the work queue (it does not: every DDC call is
+    /// dispatched asynchronously from main), or the one `main.sync` hop here would deadlock.
+    private func discoverSync() -> [MonitorState] {
             var found: [MonitorState] = []
             let known = DispatchQueue.main.sync { self.knownCapabilities }   // one hop, before any DDC work
             let discovered = MonitorDiscovery.discover()
@@ -69,15 +84,8 @@ final class MonitorStore {
                 self.readValues(into: &s)
                 found.append(s)
             }
-            DispatchQueue.main.async {
-                self.states = found; self.onChange?()
-                // A display came and went during a link renegotiation: look again shortly, a few times.
-                if found.isEmpty, !discovered.isEmpty || self.emptyRetries < 3 {
-                    self.emptyRetries += 1
-                    if self.emptyRetries <= 3 { DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.discover() } }
-                } else { self.emptyRetries = 0 }
-            }
-        }
+            _ = discovered
+            return found
     }
 
     /// Re-reads live values for every monitor (menu open, after an action) — FR8.
@@ -129,14 +137,21 @@ final class MonitorStore {
             guard let s = self.states.first(where: { $0.id == id }) else { completion?("monitor is gone"); return }
             let monitor = s.monitor
             self.work.async { [weak self] in
+                guard let self else { return }
                 var err: String?
-                do { try action(monitor) } catch { err = "\(error)" }
-                DispatchQueue.main.async {
-                    completion?(err)
-                    // A failed transport call usually means the display just reconfigured: look again.
-                    if err != nil { self?.scheduleRediscover() }
+                do { try action(monitor) } catch let first {
+                    if case DDCError.ioFailed = first {
+                        // The display reconfigured under us and the IOAVService is stale (MACH_SEND_INVALID_DEST):
+                        // rediscover inline and retry once on the fresh service.
+                        let fresh = self.discoverSync()
+                        DispatchQueue.main.async { self.states = fresh; self.onChange?() }
+                        if let again = fresh.first(where: { $0.id == id })?.monitor {
+                            do { try action(again) } catch { err = "\(error)" }
+                        } else { err = "\(first)" }
+                    } else { err = "\(first)" }
                 }
-                self?.refresh(only: id)
+                DispatchQueue.main.async { completion?(err) }
+                self.refresh(only: id)
             }
         }
     }
