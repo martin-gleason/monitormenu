@@ -36,8 +36,9 @@ final class Actions {
             }
         }
         guard !states.isEmpty else { throw ActionError.noMonitor(nil) }
-        guard let sel = selector?.trimmingCharacters(in: .whitespaces), !sel.isEmpty else { return states[0] }
-        if let m = states.first(where: { $0.name.lowercased().contains(sel.lowercased()) || $0.id == sel || $0.displayID.map { "\($0)" == sel } == true }) { return m }
+        let sel = selector?.trimmingCharacters(in: .whitespaces) ?? ""
+        // FR10: the user's name wins, then the monitor's own name, serial or display id (MonitorNames.match).
+        if let id = store.names.match(sel, in: states.map { $0.identity }), let m = states.first(where: { $0.id == id.key }) { return m }
         throw ActionError.noMonitor(sel)
     }
 
@@ -54,21 +55,21 @@ final class Actions {
         guard let code = VCP.inputCode(from: text) else { throw ActionError.unknownInput(text) }
         let s = try await resolve(monitor)
         try await run(s.id, retrainsLink: true) { try $0.setInput(code) }
-        return (s.name, VCP.label(code: VCP.inputSource, value: code))
+        return (store.names.displayName(for: s.identity), VCP.label(code: VCP.inputSource, value: code))
     }
 
     @discardableResult
     func setBrightness(_ value: Int, monitor: String? = nil) async throws -> String {
         let s = try await resolve(monitor)
         try await run(s.id) { try $0.setBrightness(UInt16(max(0, min(100, value)))) }
-        return s.name
+        return store.names.displayName(for: s.identity)
     }
 
     @discardableResult
     func setContrast(_ value: Int, monitor: String? = nil) async throws -> String {
         let s = try await resolve(monitor)
         try await run(s.id) { try $0.setContrast(UInt16(max(0, min(100, value)))) }
-        return s.name
+        return store.names.displayName(for: s.identity)
     }
 
     /// Accepts off, small, large, split, or a hex/decimal code the monitor advertises.
@@ -77,7 +78,7 @@ final class Actions {
         let s = try await resolve(monitor)
         guard let code = VCP.pipCode(from: text) else { throw ActionError.badValue(text) }
         try await run(s.id, retrainsLink: true) { try $0.setPiPMode(code) }
-        return (s.name, VCP.label(code: VCP.pipMode, value: code))
+        return (store.names.displayName(for: s.identity), VCP.label(code: VCP.pipMode, value: code))
     }
 
     @discardableResult
@@ -85,7 +86,7 @@ final class Actions {
         guard let code = VCP.inputCode(from: text) else { throw ActionError.unknownInput(text) }
         let s = try await resolve(monitor)
         try await run(s.id) { try $0.setPiPSource(code) }
-        return s.name
+        return store.names.displayName(for: s.identity)
     }
 
     @discardableResult
@@ -93,18 +94,23 @@ final class Actions {
         let s = try await resolve(monitor)
         let code: UInt8 = s.powerModes.contains(0x04) ? 0x04 : 0x05
         try await run(s.id) { try $0.setPower(code) }
-        return s.name
+        return store.names.displayName(for: s.identity)
     }
 
     func rescan() { store.discover() }
 
-    /// monitormenu://input/hdmi2?display=dell · brightness/60 · contrast/70 · pip/small · pip-source/hdmi1 · sleep · switcher · rescan
+    /// monitormenu://input/hdmi2?display=dell · brightness/60 · contrast/70 · pip/small · pip-source/hdmi1 · sleep · switcher · rescan · rename/Desk?display=dell
     func handle(url: URL) async throws -> String {
         let display = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "display" }?.value
         let verb = url.host ?? ""
         let arg = url.pathComponents.dropFirst().first ?? ""
         switch verb {
         case "input": let r = try await switchInput(arg, monitor: display); return "\(r.monitor): input → \(r.input)"
+        case "rename":
+            let s = try await resolve(display)
+            let newName = arg.removingPercentEncoding ?? arg
+            store.names.set(newName, for: s.identity); store.discover()
+            return "\(s.name): named \"\(store.names.displayName(for: s.identity))\""
         case "brightness": guard let v = Int(arg) else { throw ActionError.badValue(arg) }; return "\(try await setBrightness(v, monitor: display)): brightness → \(v)"
         case "contrast": guard let v = Int(arg) else { throw ActionError.badValue(arg) }; return "\(try await setContrast(v, monitor: display)): contrast → \(v)"
         case "pip": let r = try await setPiP(arg, monitor: display); return "\(r.monitor): PiP → \(r.mode)"
