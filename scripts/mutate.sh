@@ -29,7 +29,11 @@ case "$id" in
       from='guard done.wait(timeout: .now() + timeout) == .success, let r = result else'
       to='done.wait(); guard let r = result else'
       filter=DDCFrameTests/testDeadlineChannelTimesOut ;;
-  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4|M5|M6"; exit 2 ;;
+  M7) file=Sources/MonitorCore/MonitorNames.swift
+      from='let n = all[identity.key]?'
+      to='let n = all["\(identity.displayID ?? 0)"]?'
+      filter=MonitorNamesTests/testNamesAreKeyedBySerialNotDisplayID ;;
+  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4|M5|M6|M7"; exit 2 ;;
 esac
 if ! git diff --quiet -- "$file"; then echo "$file has uncommitted changes; refusing to mutate"; exit 2; fi
 if ! grep -qF -- "$from" "$file"; then echo "$id: pattern not found in $file — the mutation no longer applies"; exit 2; fi

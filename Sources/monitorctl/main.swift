@@ -11,6 +11,7 @@ import MonitorCore
 //   monitorctl set power <standby|on|0xNN> [--display X]
 //   monitorctl set pip <off|small|large|split|0xNN> [--display X]    monitorctl set pip-source <input> [--display X]
 //   monitorctl probe [--display X] [--count N]       RR2: read reliability over N reads
+//   monitorctl rename "<name>" [--display X]         FR10: name a monitor; --clear removes the name
 //
 // `get <hex code>` reads any code for diagnosis. There is deliberately no raw `set <code> <value>`:
 // writes are limited to the spec's FR2–FR5 controls (review K2, 2026-10-19).
@@ -36,10 +37,12 @@ let verb = args.first ?? "list"
 let monitors = MonitorDiscovery.discover()
 if monitors.isEmpty { fail("no external monitor with a DDC channel was found") }
 
+let names = MonitorNames()
+func shown(_ m: Monitor) -> String { let n = names.displayName(for: m.identity); return n == m.name ? m.name : "\(n) (\(m.name))" }
 func pick() -> Monitor {
-    guard let sel = displaySel else { return monitors[0] }
-    if let m = monitors.first(where: { $0.name.lowercased().contains(sel.lowercased()) || "\($0.identity.displayID ?? 0)" == sel }) { return m }
-    fail(DDCError.noSuchMonitor(sel).description)
+    // FR10: the user's name wins, then the monitor's own name, serial or display id.
+    if let id = names.match(displaySel ?? "", in: monitors.map { $0.identity }), let m = monitors.first(where: { $0.identity.key == id.key }) { return m }
+    fail(DDCError.noSuchMonitor(displaySel ?? "").description)
 }
 
 func load(_ m: Monitor) -> Capabilities {
@@ -58,12 +61,12 @@ case "list":
         let b = try? m.brightness(), c = try? m.contrast()
         let inputs = m.inputs().map { ["code": hex($0), "name": VCP.label(code: VCP.inputSource, value: $0), "active": input == $0] }
         if json {
-            rows.append(["name": m.name, "displayID": m.identity.displayID ?? 0, "serial": m.identity.alphanumericSerial ?? "",
+            rows.append(["name": names.displayName(for: m.identity), "modelName": m.name, "displayID": m.identity.displayID ?? 0, "serial": m.identity.alphanumericSerial ?? "",
                          "model": caps.model ?? "", "inputs": inputs,
                          "input": input.map(hex) ?? "", "brightness": b?.current ?? -1, "contrast": c?.current ?? -1,
                          "pip": m.hasPiP, "pipModes": m.pipModes().map { ["code": hex($0), "name": VCP.label(code: VCP.pipMode, value: $0)] }])
         } else {
-            print("\(m.name)  [display \(m.identity.displayID ?? 0), serial \(m.identity.alphanumericSerial ?? "?"), model \(caps.model ?? "?")]")
+            print("\(shown(m))  [display \(m.identity.displayID ?? 0), serial \(m.identity.alphanumericSerial ?? "?"), model \(caps.model ?? "?")]")
             print("  inputs:     " + m.inputs().map { ($0 == input ? "● " : "○ ") + VCP.label(code: VCP.inputSource, value: $0) + " (\(hex($0)))" }.joined(separator: "  "))
             print("  brightness: \(b.map { "\($0.current)/\($0.max)" } ?? "?")   contrast: \(c.map { "\($0.current)/\($0.max)" } ?? "?")")
             if m.hasPiP { print("  pip modes:  " + m.pipModes().map { VCP.label(code: VCP.pipMode, value: $0) + " (\(hex($0)))" }.joined(separator: "  ")) }
@@ -114,6 +117,11 @@ case "set":
         }
     } catch { fail("\(m.name): \(error)") }
 
+case "rename":
+    let m = pick()
+    if takeFlag("--clear") || args.count < 2 { names.clear(for: m.identity); print("\(m.name): name cleared") }
+    else { names.set(args[1], for: m.identity); print("\(m.name): named \"\(names.displayName(for: m.identity))\"") }
+
 case "probe":
     let m = pick(); _ = load(m)
     var ok = 0, fails = 0; var ms: [Double] = []
@@ -125,5 +133,5 @@ case "probe":
     print("\(m.name): \(ok)/\(count) reads succeeded, \(fails) failed, mean \(String(format: "%.0f", avg)) ms per read (\(m.link.timing.attempts) attempts max each)")
 
 default:
-    fail("usage: monitorctl list|capabilities|get|set|probe  (see source header)")
+    fail("usage: monitorctl list|capabilities|get|set|rename|probe  (see source header)")
 }

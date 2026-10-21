@@ -13,9 +13,11 @@ struct MonitorState {
     var pipMode: UInt8?
     var powerModes: [UInt8] = []
     var lastError: String?
+    /// The monitor's own name (EDID). The user's name, if any, is `MonitorStore.names`.
     var name: String { monitor.name }
     /// Identity key for actions and menu items: the serial, which survives the display-id changes PiP causes.
     var id: String { monitor.identity.key }
+    var identity: MonitorIdentity { monitor.identity }
     var displayID: CGDirectDisplayID? { monitor.identity.displayID }
 }
 
@@ -23,6 +25,9 @@ struct MonitorState {
 /// Nothing here touches AppKit; the delegate observes `onChange`.
 final class MonitorStore {
     private(set) var states: [MonitorState] = []
+    /// FR10: user-given names, re-read from defaults on every access so a `monitorctl rename` shows up on the next menu open.
+    let names = MonitorNames()
+    func displayName(_ s: MonitorState) -> String { names.displayName(for: s.identity) }
     var onChange: (() -> Void)?
     private let work = DispatchQueue(label: "dev.marty.MonitorMenu.work", qos: .userInitiated)
     private var rediscoverPending = false

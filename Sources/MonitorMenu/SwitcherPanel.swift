@@ -50,8 +50,10 @@ final class SwitcherView: NSView {
         rows = []
         var y: CGFloat = 10
         func place(_ v: NSView, height: CGFloat) { v.frame = NSRect(x: 16, y: y, width: 288, height: height - 4); addSubview(v); y += height }
+        let names = MonitorNames()
         for s in states {
-            let header = NSTextField(labelWithString: s.name)
+            let shown = names.displayName(for: s.identity)
+            let header = NSTextField(labelWithString: shown == s.name ? s.name : "\(shown)  ·  \(s.name)")
             header.font = .systemFont(ofSize: 11, weight: .semibold); header.textColor = .secondaryLabelColor
             place(header, height: 20)
             for code in s.inputs {

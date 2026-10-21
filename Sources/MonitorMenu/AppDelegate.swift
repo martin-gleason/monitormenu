@@ -55,7 +55,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     // FR8: re-read on open. The menu shows the cached state immediately and updates in place.
-    func menuWillOpen(_ menu: NSMenu) { menuOpen = true; store.refresh() }
+    func menuWillOpen(_ menu: NSMenu) {
+        // A rename from monitorctl changes a header, which is structural: rebuild before showing, then re-read values.
+        if lastNames != store.names.all { rebuildNow() }
+        menuOpen = true; store.refresh()
+    }
+    private var lastNames: [String: String] = [:]
     func menuDidClose(_ menu: NSMenu) {
         menuOpen = false
         if rebuildWhenClosed { rebuildWhenClosed = false; rebuild() }
@@ -83,6 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func rebuildNow() {
+        lastNames = store.names.all
         menu.removeAllItems()
         sliders.removeAll()
         checkItems.removeAll()
@@ -91,9 +97,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(i)
         }
         for s in store.states {
-            let header = NSMenuItem(title: s.name, action: nil, keyEquivalent: "")
+            let shown = store.displayName(s)   // FR10
+            let header = NSMenuItem(title: shown, action: nil, keyEquivalent: "")
             header.isEnabled = false
-            header.attributedTitle = NSAttributedString(string: s.name, attributes: [.font: NSFont.boldSystemFont(ofSize: 13)])
+            header.attributedTitle = NSAttributedString(string: shown, attributes: [.font: NSFont.boldSystemFont(ofSize: 13)])
+            header.toolTip = shown == s.name ? nil : s.name
             menu.addItem(header)
 
             for code in s.inputs {   // FR2
@@ -148,6 +156,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 i.target = self; i.indentationLevel = 1; i.representedObject = Action(id: s.id, code: code)
                 menu.addItem(i)
             }
+            let rename = NSMenuItem(title: "Rename…", action: #selector(renameMonitor(_:)), keyEquivalent: "")   // FR10
+            rename.target = self; rename.indentationLevel = 1; rename.representedObject = Action(id: s.id, code: 0)
+            menu.addItem(rename)
             if let e = s.lastError {   // NFR4: failures are a greyed line, never a dialog
                 let i = NSMenuItem(title: "Not responding: \(e)", action: nil, keyEquivalent: ""); i.isEnabled = false; i.indentationLevel = 1
                 menu.addItem(i)
@@ -192,6 +203,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         store.perform(on: a.id, { try $0.setPower(a.code) }, completion: report)
     }
     @objc private func rescan() { store.discover() }
+
+    /// FR10: one alert with a text field. Empty clears the name. Re-reads the menu afterwards.
+    @objc private func renameMonitor(_ sender: NSMenuItem) {
+        guard let a = sender.representedObject as? Action, let s = store.states.first(where: { $0.id == a.id }) else { return }
+        let alert = NSAlert()
+        alert.messageText = "Name this monitor"
+        alert.informativeText = "\(s.name), serial \(s.identity.alphanumericSerial ?? "unknown"). Leave empty to use the monitor's own name."
+        alert.addButton(withTitle: "Save"); alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.stringValue = store.names.name(for: s.identity) ?? ""
+        field.placeholderString = s.name
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        NSApp.activate(ignoringOtherApps: true)
+        if alert.runModal() == .alertFirstButtonReturn {
+            store.names.set(field.stringValue, for: s.identity)
+            rebuild()
+        }
+    }
 
     /// NFR4: a failed write is reported in the menu bar title for a moment, never as a modal.
     private func report(_ error: String?) {
