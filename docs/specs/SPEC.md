@@ -19,6 +19,7 @@ Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 17:34 -05:00
 | FR7 | Every action is reachable from outside the app by a URL scheme and a command-line entry point, so Raycast, Alfred, Shortcuts, or a script can trigger it. |
 | FR8 | The menu reflects the monitor's actual state when opened and re-reads it after every action. |
 | FR9 | The app ships ready to use: a default global hotkey opens the switcher, and its actions appear in the Shortcuts app and Siri without the user building anything. |
+| FR10 | A monitor can be given a name of the user's choosing from the menu. The name is shown everywhere the monitor is named, matches `--display`, `?display=` and the Monitor parameter of every intent, persists across launches, is keyed by the monitor's serial, and can be cleared to return to the monitor's own name. *(v1.0, D13, pasted on the owner's instruction 2026-10-21.)* |
 
 ## Non-functional requirements
 

@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-20 07:30 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-21 10:30 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -26,7 +26,7 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | D10 | proposed | MVP | Monitor neutral (NFR8). The HP Omen the owner expects within 90 days of 2026-10-19 is the second test monitor; until it arrives, two-display matching is tested with a fixture, not hardware (`O10`). |
 | D11 | proposed | MVP | `switchctl` has no raw `set <code> <value>`; writes are limited to the spec's controls (input, brightness, contrast, power, PiP mode and source). Raw `get 0xNN` stays for diagnosis. Source: review K2. The volume round-trip used as write-path evidence on 2026-10-19 was made with the command before it was removed. |
 | D12 | ratified | MVP | **Supersedes D5.** The owner named it **MonitorMenu** on 2026-10-19: "Name is MonitorMenu". Bundle id `dev.marty.MonitorMenu`, URL scheme `monitormenu://`, library `MonitorCore`, command line `monitorctl`, repo `martin-gleason/monitormenu`. Register rows, the review log and the learnings keep the old name as the historical record. |
-| D13 | proposed | v1.0 | **Milestone v1.0 follows MVP** and opens with F2, naming monitors (owner, 2026-10-20: "monitormenu should allow for renaming of devices -- can we add that to v1.0"). Adds FR10 (`docs/plans/F2.md`). Names live in `UserDefaults` keyed by the monitor's serial and are used everywhere the monitor is named. |
+| D13 | ratified | v1.0 | **Milestone v1.0 follows MVP** and opens with F2, naming monitors (owner, 2026-10-20: "monitormenu should allow for renaming of devices -- can we add that to v1.0"). Adds FR10 (`docs/plans/F2.md`). Names live in `UserDefaults` keyed by the monitor's serial and are used everywhere the monitor is named. |
 
 ## Risks (RR)
 
@@ -61,7 +61,8 @@ Outstanding items only the owner can close.
 | O10 | When the HP Omen arrives, connect both monitors and run the live check; paste `switchctl list`. Closes two-display matching (D10). | P2 | open |
 | O11 | Look at the Dell's on-screen menu: is Brightness greyed out, and is Smart HDR or a game preset on? Brightness reads 0 and refuses writes over DDC since about 18:00 on 2026-10-19 (RR6). | P1 | closed 2026-10-19 — resolved itself by 20:00 (56/75 back). One question remains for the owner: did you touch the monitor's buttons or see the screen go blank between 19:45 and 20:00? If not, the agent's PiP cycle cleared it. |
 | O12 | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input button is), then pick that input from the SwitchBar menu and switch back from the other side or the buttons. Closes FR2 live and answers RR3. | P1 | held 2026-10-20 — owner: \"I don't have a second source attached\". Waits for the HP Omen or any HDMI device; RR3 stays unanswered until then |
-| O13 | Gate F2 (name your monitors, `docs/plans/F2.md`) and ratify D13, which also opens milestone v1.0 and adds FR10 to the spec (paste it in, or tell the agent to). | P1 | open |
+| O13 | Gate F2 (name your monitors, `docs/plans/F2.md`) and ratify D13, which also opens milestone v1.0 and adds FR10 to the spec (paste it in, or tell the agent to). | P1 | closed 2026-10-21 — "f2 and d13 are good to go"; FR10 pasted into the spec by the agent on that instruction |
+| O14 | Open the Shortcuts app (it was opened for you), click the Apps column, look for MonitorMenu. If the six actions are there, A3 closes; if not, say so and the next bisect is a one-file Xcode-built app with one intent. | P0 | open |
 
 ## Agent items (A)
 
@@ -71,7 +72,7 @@ Outstanding items only the agent can close: defects in its own work, findings it
 |---|---|---|---|
 | A1 | Re-create the `IOAVService` per transaction instead of holding one, so a link retrain never leaves a dead handle and the action after a PiP or input change stops paying 3–8 s of retries (RR9). Measure first: does `IOAVServiceCreateWithService` per call cost more than the retry? | P2 | open |
 | A2 | Second adversarial pass over the post-review fixes (`docs/reviews/F1.md` § Not re-reviewed). | P1 | open |
-| A3 | **FR9 defect:** the Shortcuts app does not list MonitorMenu's actions. `Metadata.appintents` has all six actions, both enums and four App Shortcuts; the binary links AppIntents and keeps the intent types; no appintentsd log line mentions the bundle. Suspects: ad-hoc signature without a team id, two LaunchServices registrations (build/ and ~/Applications), or the SwiftPM binary missing something Xcode's link step adds. Next: unregister the build copy, relaunch, read appintentsd logs; then a minimal Xcode-built control app to bisect. | P0 | open |
+| A3 | **FR9 defect:** the Shortcuts app does not list MonitorMenu's actions. **2026-10-21:** the installed bundle was LaunchServices-flagged `quarantined` and ad-hoc signed; `scripts/build-app.sh` now signs with the Developer ID identity (team KH6NBQRZBY), strips quarantine and keeps one LS registration. Owner to look again (`O14`). `Metadata.appintents` has all six actions, both enums and four App Shortcuts; the binary links AppIntents and keeps the intent types; no appintentsd log line mentions the bundle. Suspects: ad-hoc signature without a team id, two LaunchServices registrations (build/ and ~/Applications), or the SwiftPM binary missing something Xcode's link step adds. Next: unregister the build copy, relaunch, read appintentsd logs; then a minimal Xcode-built control app to bisect. | P0 | open |
 
 ## Chores (C)
 
@@ -88,7 +89,7 @@ A gate is an **event**, not a place. It is recorded here so it exists outside th
 |---|---|---|---|---|---|
 | G1 | C1 harness | done (crossed; closed 2026-10-19 with CI) | 2026-10-19 | 2026-10-19 | "Go ahead with a monitor neutral native swift app" |
 | G2 | F1 inputs, picture functions and PiP from the menu bar | done (crossed) | 2026-10-19 | 2026-10-19 | "Go ahead with a monitor neutral native swift app" |
-| G3 | F2 name your monitors | open | 2026-10-20 | — | — |
+| G3 | F2 name your monitors | done (crossed) | 2026-10-20 | 2026-10-21 | "f2 and d13 are good to go. begin f2 and a3" |
 
 ## Hooks (H)
 
@@ -116,3 +117,4 @@ Named ways to break the code, each paired with the test that must catch it. A te
 | M4 | `Sources/SwitchCore/Monitor.swift` | Let a factory-reset code (0x04, 0x05, 0x08) through when the monitor advertises it | `WhitelistTests.testFactoryResetCodesAreNeverOffered` | killed 2026-10-19: 4 failures / 1 test (`scripts/mutate.sh M4`) |
 | M5 | `Sources/SwitchCore/DDCProtocol.swift` | Skip the reply checksum (a flipped byte becomes a value) | `DDCFrameTests.testChecksumMismatchIsRejected` | killed 2026-10-19: 2 failures / 1 test (`scripts/mutate.sh M5`) |
 | M6 | `Sources/SwitchCore/I2CChannel.swift` | Wait forever for the I2C call instead of the deadline | `DDCFrameTests.testDeadlineChannelTimesOut` | killed 2026-10-19: 2 failures / 1 test (`scripts/mutate.sh M6`) |
+| M7 | `Sources/MonitorCore/MonitorNames.swift` | Key names by CoreGraphics display id instead of serial | `MonitorNamesTests.testNamesAreKeyedBySerialNotDisplayID` | killed 2026-10-21: 3 failures / 1 test (`scripts/mutate.sh M7`) |

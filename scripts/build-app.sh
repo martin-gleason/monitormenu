@@ -39,15 +39,26 @@ echo "$PWD/$CONST" > build/appintents/constvals.txt
   --force --deployment-aware-processing --no-app-shortcuts-localization 2>&1 | grep -vE "^$" || true
 test -d "$APP/Contents/Resources/Metadata.appintents" && echo "App Intents metadata: $(ls "$APP/Contents/Resources/Metadata.appintents" | tr '\n' ' ')" || { echo "Metadata.appintents missing" >&2; exit 1; }
 
-# Hardened runtime, ad-hoc identity. Replace "-" with a Developer ID to notarize.
-codesign --force --options runtime --entitlements Resources/MonitorMenu.entitlements --sign - "$APP/Contents/MacOS/monitorctl"
-codesign --force --options runtime --entitlements Resources/MonitorMenu.entitlements --sign - "$APP"
+# Hardened runtime. Signs with the first "Developer ID Application" identity in the keychain when
+# there is one (App Intents are only surfaced to Shortcuts for apps with a real team identity —
+# defect A3, 2026-10-21), else ad hoc. Override with SIGN_IDENTITY=- or a certificate name.
+IDENTITY="${SIGN_IDENTITY:-$(security find-identity -v -p codesigning 2>/dev/null | awk -F'"' '/Developer ID Application/ {print $2; exit}')}"
+IDENTITY="${IDENTITY:--}"
+echo "Signing as: $IDENTITY"
+codesign --force --options runtime --timestamp=none --entitlements Resources/MonitorMenu.entitlements --sign "$IDENTITY" "$APP/Contents/MacOS/monitorctl"
+codesign --force --options runtime --timestamp=none --entitlements Resources/MonitorMenu.entitlements --sign "$IDENTITY" "$APP"
+xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
 echo "Built $APP"
 if [[ "${1:-}" == "--install" ]]; then
   mkdir -p ~/Applications
   osascript -e 'tell application "MonitorMenu" to quit' >/dev/null 2>&1 || true
   rm -rf ~/Applications/MonitorMenu.app
   ditto "$APP" ~/Applications/MonitorMenu.app
+  xattr -dr com.apple.quarantine ~/Applications/MonitorMenu.app 2>/dev/null || true
+  # One LaunchServices registration, the installed one: a second (the build/ copy) confuses discovery.
+  LSR=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+  "$LSR" -u "$APP" >/dev/null 2>&1 || true
+  "$LSR" -f ~/Applications/MonitorMenu.app >/dev/null 2>&1 || true
   echo "Installed ~/Applications/MonitorMenu.app"
   if [[ -d /opt/homebrew/bin ]]; then ln -sf ~/Applications/MonitorMenu.app/Contents/MacOS/monitorctl /opt/homebrew/bin/monitorctl && echo "Linked /opt/homebrew/bin/monitorctl"; fi
 fi
