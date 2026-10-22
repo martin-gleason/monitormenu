@@ -104,7 +104,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm SwitchBar's actions are listed; then ask Siri t… |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
-| owner | O14 | P0 | open | Open the Shortcuts app (it was opened for you), click the Apps column, look for MonitorMenu. If the six actions are ther… |
+| owner | O14 | P0 | open | In the Shortcuts app, click All Actions, then the Apps list: look for MonitorMenu (six actions) and IntentProbe (one act… |
 | unassigned | A1 | P2 | open | Re-create the IOAVService per transaction instead of holding one, so a link retrain never leaves a dead handle and the a… |
 | unassigned | A2 | P1 | open | Second adversarial pass over the post-review fixes (docs/reviews/F1.md § Not re-reviewed). |
 | unassigned | A3 | P0 | open | FR9 defect: the Shortcuts app does not list MonitorMenu's actions. 2026-10-21: the installed bundle was LaunchServices-f… |
