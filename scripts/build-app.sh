@@ -14,6 +14,14 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/MonitorMenu "$APP/Contents/MacOS/MonitorMenu"
 cp .build/release/monitorctl "$APP/Contents/MacOS/monitorctl"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+# Platform and SDK keys Xcode writes and SwiftPM does not. appintentsd and LaunchServices read them
+# (defect A3 bisect, 2026-10-22: an Xcode-built control app carries them; ours did not).
+SDKV=$(xcrun --show-sdk-version --sdk macosx); SDKB=$(xcrun --show-sdk-build-version --sdk macosx); XCB=$(xcodebuild -version | awk '/Build version/ {print $3}'); XCV=$(xcodebuild -version | awk '/^Xcode/ {gsub(/\./,"",$2); printf "%04d", $2*10}')
+PB=/usr/libexec/PlistBuddy; IP="$APP/Contents/Info.plist"
+$PB -c "Add :CFBundleInfoDictionaryVersion string 6.0" -c "Add :CFBundleSupportedPlatforms array" -c "Add :CFBundleSupportedPlatforms:0 string MacOSX" \
+    -c "Add :DTPlatformName string macosx" -c "Add :DTPlatformVersion string $SDKV" -c "Add :DTSDKName string macosx$SDKV" -c "Add :DTSDKBuild string $SDKB" \
+    -c "Add :DTPlatformBuild string $SDKB" -c "Add :DTXcode string $XCV" -c "Add :DTXcodeBuild string $XCB" -c "Add :DTCompiler string com.apple.compilers.llvm.clang.1_0" \
+    -c "Add :BuildMachineOSBuild string $(sw_vers -buildVersion)" "$IP" >/dev/null
 
 # --- App Intents metadata -------------------------------------------------------------
 TOOLCHAIN=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain
@@ -33,10 +41,11 @@ echo "$PWD/$CONST" > build/appintents/constvals.txt
   --platform-family macOS \
   --deployment-target 14.0 \
   --target-triple arm64-apple-macos14.0 \
+  --bundle-identifier dev.marty.MonitorMenu \
   --source-file-list build/appintents/sources.txt \
   --swift-const-vals-list build/appintents/constvals.txt \
   --binary-file "$APP/Contents/MacOS/MonitorMenu" \
-  --force --deployment-aware-processing --no-app-shortcuts-localization 2>&1 | grep -vE "^$" || true
+  --force --compile-time-extraction --deployment-aware-processing --no-app-shortcuts-localization 2>&1 | grep -vE "^$" || true
 test -d "$APP/Contents/Resources/Metadata.appintents" && echo "App Intents metadata: $(ls "$APP/Contents/Resources/Metadata.appintents" | tr '\n' ' ')" || { echo "Metadata.appintents missing" >&2; exit 1; }
 
 # Hardened runtime. Signs with the first "Developer ID Application" identity in the keychain when

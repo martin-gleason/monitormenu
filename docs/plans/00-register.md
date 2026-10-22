@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-21 10:30 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-22 15:00 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -62,7 +62,7 @@ Outstanding items only the owner can close.
 | O11 | Look at the Dell's on-screen menu: is Brightness greyed out, and is Smart HDR or a game preset on? Brightness reads 0 and refuses writes over DDC since about 18:00 on 2026-10-19 (RR6). | P1 | closed 2026-10-19 — resolved itself by 20:00 (56/75 back). One question remains for the owner: did you touch the monitor's buttons or see the screen go blank between 19:45 and 20:00? If not, the agent's PiP cycle cleared it. |
 | O12 | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input button is), then pick that input from the SwitchBar menu and switch back from the other side or the buttons. Closes FR2 live and answers RR3. | P1 | held 2026-10-20 — owner: \"I don't have a second source attached\". Waits for the HP Omen or any HDMI device; RR3 stays unanswered until then |
 | O13 | Gate F2 (name your monitors, `docs/plans/F2.md`) and ratify D13, which also opens milestone v1.0 and adds FR10 to the spec (paste it in, or tell the agent to). | P1 | closed 2026-10-21 — "f2 and d13 are good to go"; FR10 pasted into the spec by the agent on that instruction |
-| O14 | Open the Shortcuts app (it was opened for you), click the Apps column, look for MonitorMenu. If the six actions are there, A3 closes; if not, say so and the next bisect is a one-file Xcode-built app with one intent. | P0 | open |
+| O14 | In the Shortcuts app, click All Actions, then the Apps list: look for **MonitorMenu** (six actions) and **IntentProbe** (one action, "Probe Monitor"). Report which of the two you see. Both are installed, signed with your Developer ID and running. | P0 | open |
 
 ## Agent items (A)
 
@@ -72,7 +72,7 @@ Outstanding items only the agent can close: defects in its own work, findings it
 |---|---|---|---|
 | A1 | Re-create the `IOAVService` per transaction instead of holding one, so a link retrain never leaves a dead handle and the action after a PiP or input change stops paying 3–8 s of retries (RR9). Measure first: does `IOAVServiceCreateWithService` per call cost more than the retry? | P2 | open |
 | A2 | Second adversarial pass over the post-review fixes (`docs/reviews/F1.md` § Not re-reviewed). | P1 | open |
-| A3 | **FR9 defect:** the Shortcuts app does not list MonitorMenu's actions. **2026-10-21:** the installed bundle was LaunchServices-flagged `quarantined` and ad-hoc signed; `scripts/build-app.sh` now signs with the Developer ID identity (team KH6NBQRZBY), strips quarantine and keeps one LS registration. Owner to look again (`O14`). `Metadata.appintents` has all six actions, both enums and four App Shortcuts; the binary links AppIntents and keeps the intent types; no appintentsd log line mentions the bundle. Suspects: ad-hoc signature without a team id, two LaunchServices registrations (build/ and ~/Applications), or the SwiftPM binary missing something Xcode's link step adds. Next: unregister the build copy, relaunch, read appintentsd logs; then a minimal Xcode-built control app to bisect. | P0 | open |
+| A3 | **FR9 defect:** the Shortcuts app does not list MonitorMenu's actions. **2026-10-21:** the installed bundle was LaunchServices-flagged `quarantined` and ad-hoc signed; `scripts/build-app.sh` now signs with the Developer ID identity (team KH6NBQRZBY), strips quarantine and keeps one LS registration. Owner to look again (`O14`). **Bisect 2026-10-22:** a one-intent control app built and signed by Xcode (`IntentProbe`, installed beside MonitorMenu) has byte-for-byte equivalent intents metadata; the only remaining differences were Xcode's Info.plist platform and SDK keys (`DTPlatformName`, `DTSDKName`, `CFBundleSupportedPlatforms`, …) and two processor flags (`--bundle-identifier`, `--compile-time-extraction`). `build-app.sh` now writes and passes all of them. If Shortcuts lists IntentProbe but not MonitorMenu after this, the cause is outside the bundle. `Metadata.appintents` has all six actions, both enums and four App Shortcuts; the binary links AppIntents and keeps the intent types; no appintentsd log line mentions the bundle. Suspects: ad-hoc signature without a team id, two LaunchServices registrations (build/ and ~/Applications), or the SwiftPM binary missing something Xcode's link step adds. Next: unregister the build copy, relaunch, read appintentsd logs; then a minimal Xcode-built control app to bisect. | P0 | open |
 
 ## Chores (C)
 
