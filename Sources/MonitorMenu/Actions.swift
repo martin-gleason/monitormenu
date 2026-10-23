@@ -13,10 +13,11 @@ final class Actions {
     init(store: MonitorStore) { self.store = store }
 
     enum ActionError: LocalizedError {
-        case noMonitor(String?), unknownInput(String), ddc(String), badValue(String)
+        case noMonitor(String?), ambiguous(String), unknownInput(String), ddc(String), badValue(String)
         var errorDescription: String? {
             switch self {
             case .noMonitor(let s): return s.map { "No monitor matches \"\($0)\"" } ?? "No DDC-capable monitor is connected"
+            case .ambiguous(let s): return s
             case .unknownInput(let s): return "Unknown input \"\(s)\""
             case .ddc(let s): return s
             case .badValue(let s): return "Bad value \"\(s)\""
@@ -38,7 +39,9 @@ final class Actions {
         guard !states.isEmpty else { throw ActionError.noMonitor(nil) }
         let sel = selector?.trimmingCharacters(in: .whitespaces) ?? ""
         // FR10: the user's name wins, then the monitor's own name, serial or display id (MonitorNames.match).
-        if let id = store.names.match(sel, in: states.map { $0.identity }), let m = states.first(where: { $0.id == id.key }) { return m }
+        do {
+            if let id = try store.names.match(sel, in: states.map { $0.identity }), let m = states.first(where: { $0.id == id.key }) { return m }
+        } catch let e as DDCError { throw ActionError.ambiguous(e.description) }
         throw ActionError.noMonitor(sel)
     }
 
@@ -107,10 +110,14 @@ final class Actions {
         switch verb {
         case "input": let r = try await switchInput(arg, monitor: display); return "\(r.monitor): input → \(r.input)"
         case "rename":
+            // The whole path is the name (so "Left/Right" survives); URL.path is already percent-decoded once.
+            // An empty name is refused here: clearing is `monitormenu://rename/-` or the menu, never a typo (review F2 #2, #4).
             let s = try await resolve(display)
-            let newName = arg.removingPercentEncoding ?? arg
-            store.names.set(newName, for: s.identity); store.discover()
-            return "\(s.name): named \"\(store.names.displayName(for: s.identity))\""
+            let newName = String(url.path.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !newName.isEmpty else { throw ActionError.badValue("rename needs a name; use rename/- to clear") }
+            store.names.set(newName == "-" ? nil : newName, for: s.identity)
+            store.onChange?()
+            return "\(s.name): \(newName == "-" ? "name cleared" : "named \"\(store.names.displayName(for: s.identity))\"")"
         case "brightness": guard let v = Int(arg) else { throw ActionError.badValue(arg) }; return "\(try await setBrightness(v, monitor: display)): brightness → \(v)"
         case "contrast": guard let v = Int(arg) else { throw ActionError.badValue(arg) }; return "\(try await setContrast(v, monitor: display)): contrast → \(v)"
         case "pip": let r = try await setPiP(arg, monitor: display); return "\(r.monitor): PiP → \(r.mode)"

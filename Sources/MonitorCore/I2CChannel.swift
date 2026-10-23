@@ -18,6 +18,7 @@ public enum DDCError: Error, Equatable, CustomStringConvertible {
     case valueNotAdvertised(code: UInt8, value: UInt16)
     case refusedFactoryReset(code: UInt8)
     case noSuchMonitor(String)
+    case ambiguousMonitor(String, [String])
 
     public var description: String {
         switch self {
@@ -28,6 +29,7 @@ public enum DDCError: Error, Equatable, CustomStringConvertible {
         case .valueNotAdvertised(let c, let v): return String(format: "value 0x%02X is not advertised for VCP 0x%02X", v, c)
         case .refusedFactoryReset(let c): return String(format: "VCP 0x%02X is a factory reset and is never sent", c)
         case .noSuchMonitor(let s): return "no monitor matches \"\(s)\""
+        case .ambiguousMonitor(let s, let hits): return "\"\(s)\" matches more than one monitor: \(hits.joined(separator: ", ")) — use a name or serial that picks one"
         }
     }
 }

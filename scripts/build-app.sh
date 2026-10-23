@@ -52,7 +52,11 @@ test -d "$APP/Contents/Resources/Metadata.appintents" && echo "App Intents metad
 # there is one (App Intents are only surfaced to Shortcuts for apps with a real team identity —
 # defect A3, 2026-10-21), else ad hoc. Override with SIGN_IDENTITY=- or a certificate name.
 IDENTITY="${SIGN_IDENTITY:-$(security find-identity -v -p codesigning 2>/dev/null | awk -F'"' '/Developer ID Application/ {print $2; exit}')}"
-IDENTITY="${IDENTITY:--}"
+if [ -z "$IDENTITY" ]; then
+  # An ad-hoc bundle is exactly what Shortcuts refused to list (register A3), so refuse to make one by accident.
+  if [ "${ALLOW_ADHOC:-0}" = "1" ]; then IDENTITY="-"; echo "No Developer ID identity found; ALLOW_ADHOC=1 set, signing ad hoc (Shortcuts will not list the actions)"
+  else echo "error: no 'Developer ID Application' identity in the keychain. Set SIGN_IDENTITY=<name> or ALLOW_ADHOC=1 to sign ad hoc." >&2; exit 1; fi
+fi
 echo "Signing as: $IDENTITY"
 codesign --force --options runtime --timestamp=none --entitlements Resources/MonitorMenu.entitlements --sign "$IDENTITY" "$APP/Contents/MacOS/monitorctl"
 codesign --force --options runtime --timestamp=none --entitlements Resources/MonitorMenu.entitlements --sign "$IDENTITY" "$APP"

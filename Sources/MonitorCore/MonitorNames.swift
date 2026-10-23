@@ -33,15 +33,29 @@ public final class MonitorNames {
 
     public func clear(for identity: MonitorIdentity) { set(nil, for: identity) }
 
-    /// One resolver for the menu, the switcher, intents, URLs and the CLI: an exact match on the user's
-    /// name wins, then a case-insensitive substring of the user's name or the monitor's own name, then
-    /// the serial key or the CoreGraphics id as text.
-    public func match(_ selector: String, in identities: [MonitorIdentity]) -> MonitorIdentity? {
-        let sel = selector.trimmingCharacters(in: .whitespaces)
+    /// One resolver for the menu, the switcher, intents, URLs and the CLI. Tiers, each tried in turn and
+    /// each refusing to guess: exact user name, exact serial key, exact CoreGraphics id, exact monitor
+    /// name, then a case-insensitive substring of the user name, then of the monitor name. The first tier
+    /// with exactly one hit wins; a tier with more than one hit is ambiguous and throws, so discovery
+    /// order never decides and a user name can never shadow a serial (review F2 #1). An empty selector is
+    /// the first monitor, which the intents document as the default.
+    public func match(_ selector: String, in identities: [MonitorIdentity]) throws -> MonitorIdentity? {
+        let sel = selector.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !sel.isEmpty else { return identities.first }
         let low = sel.lowercased()
-        if let exact = identities.first(where: { name(for: $0)?.lowercased() == low }) { return exact }
-        if let sub = identities.first(where: { (name(for: $0)?.lowercased().contains(low) ?? false) || $0.name.lowercased().contains(low) }) { return sub }
-        return identities.first { $0.key == sel || $0.displayID.map { "\($0)" == sel } == true }
+        let tiers: [(MonitorIdentity) -> Bool] = [
+            { self.name(for: $0)?.lowercased() == low },
+            { $0.key == sel },
+            { $0.displayID.map { "\($0)" == sel } == true },
+            { $0.name.lowercased() == low },
+            { self.name(for: $0)?.lowercased().contains(low) ?? false },
+            { $0.name.lowercased().contains(low) },
+        ]
+        for tier in tiers {
+            let hits = identities.filter(tier)
+            if hits.count == 1 { return hits[0] }
+            if hits.count > 1 { throw DDCError.ambiguousMonitor(sel, hits.map { displayName(for: $0) + " [\($0.key)]" }) }
+        }
+        return nil
     }
 }
