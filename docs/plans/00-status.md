@@ -18,7 +18,7 @@ Named, never numbered (`D2`). **No source read here marks a milestone as the cur
 | Milestone | Decisions landing here | Units |
 |---|---|---|
 | MVP | 12 | C1, F1 |
-| v1.0 | 1 | F1b, F2 |
+| v1.0 | 2 | F1b, F2 |
 
 ## Features and chores
 
@@ -37,20 +37,20 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
-| Decisions (`D`) | 13 | 9 | 0 | 4 |
+| Decisions (`D`) | 14 | 10 | 0 | 4 |
 | Risks (`RR`) | 9 | 6 | 0 | 3 |
 | Owner items (`O`) | 14 | 5 | 0 | 9 |
 | Agent items (`A`) | 3 | 0 | 0 | 3 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
 | Mutations (`M`) | 9 | 0 | 0 | 9 |
-| Chores (`C`) | 2 | 0 | 0 | 2 |
+| Chores (`C`) | 3 | 0 | 0 | 3 |
 | Gates (`G`) | 3 | 0 | 0 | 3 |
 
 ### By status
 
 | Register | Status | Count |
 |---|---|---|
-| `D` | proposed | 9 |
+| `D` | proposed | 10 |
 | `D` | ratified | 3 |
 | `D` | superseded | 1 |
 | `RR` | open | 6 |
@@ -62,7 +62,7 @@ Counted from the register itself. A register with no rows still gets a line.
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 9 |
-| `C` | done | 2 |
+| `C` | done | 3 |
 | `G` | done | 3 |
 
 ## Hooks
@@ -100,6 +100,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D9 | — | proposed | Built as written; the fallback was not needed — appintentsmetadataprocessor runs from scripts/build-app.sh on the .swift… |
 | owner | D10 | — | proposed | Monitor neutral (NFR8). The HP Omen the owner expects within 90 days of 2026-10-19 is the second test monitor; until it … |
 | owner | D11 | — | proposed | switchctl has no raw set <code> <value>; writes are limited to the spec's controls (input, brightness, contrast, power, … |
+| owner | D14 | — | proposed | Show a monitor-side lock instead of dead sliders. When a monitor reports a preset that locks brightness and contrast (th… |
 | owner | O5 | P1 | open | Sit at the G3223D for ten minutes while the agent steps through the 0xE9 values and say what each one shows. Closes RR5.… |
 | owner | O6 | P2 | open | Ratify D1–D6. |
 | owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm MonitorMenu's actions are listed (done 2026-10-… |
@@ -109,4 +110,4 @@ Every open row in the register. Owner is the row's Owner column where the table 
 
 ---
 
-21 open register rows.
+22 open register rows.
