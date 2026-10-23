@@ -14,6 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var hotKeySpec: String { UserDefaults.standard.string(forKey: "hotkey") ?? HotKey.defaultSpec }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // FR9: hand Siri the phrases and their parameter values; without this call Siri never learns them.
+        MonitorMenuShortcuts.updateAppShortcutParameters()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let b = statusItem.button {
             b.image = NSImage(systemSymbolName: "display", accessibilityDescription: "MonitorMenu")
