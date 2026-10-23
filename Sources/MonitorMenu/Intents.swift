@@ -1,4 +1,5 @@
 import AppIntents
+import AppKit
 import MonitorCore
 
 // FR7, FR9: App Intents make every action a Shortcuts action and, via AppShortcutsProvider,
@@ -77,10 +78,13 @@ struct SleepMonitorIntent: AppIntent {
 
 struct OpenSwitcherIntent: AppIntent {
     static var title: LocalizedStringResource = "Open Input Switcher"
-    static var openAppWhenRun = true
+    // Not `openAppWhenRun`: the app is a menu bar agent (LSUIElement) and Siri cannot "open" it the way it
+    // opens a windowed app; it answered "can't open MonitorMenu because it's restricted" (O9, 2026-10-23).
+    // The intent runs inside the running app, which brings its own panel forward.
     @MainActor func perform() async throws -> some IntentResult {
+        NSApp.activate(ignoringOtherApps: true)
         Actions.shared.openSwitcher?()
-        return .result()
+        return .result(dialog: "Switcher open.")
     }
 }
 
