@@ -23,13 +23,32 @@ public enum MonitorDiscovery {
             if match == nil { match = displays.filter { $0.order < svc.order && !usedDisplays.contains($0.order) }.max { $0.order < $1.order } }
             guard let disp = match else { IOObjectRelease(svc.service); continue }
             usedDisplays.insert(disp.order)
-            guard let av = IOAVServiceCreateWithService(kCFAllocatorDefault, svc.service)?.takeRetainedValue() else { IOObjectRelease(svc.service); continue }
+            // A service that cannot give an IOAVService is not a DDC channel. The handle made here is only
+            // the probe; the channel makes its own per call (A1) from the node's registry id.
+            guard IOAVServiceCreateWithService(kCFAllocatorDefault, svc.service)?.takeRetainedValue() != nil else { IOObjectRelease(svc.service); continue }
+            var entryID: UInt64 = 0
+            IORegistryEntryGetRegistryEntryID(svc.service, &entryID)
             IOObjectRelease(svc.service)
-            let link = DDCMonitorLink(channel: DeadlineChannel(IOAVServiceChannel(service: av)), label: disp.key ?? "\(disp.order)")
+            let link = DDCMonitorLink(channel: DeadlineChannel(IOAVServiceChannel(entryID: entryID, displayKey: svc.key)), label: disp.key ?? "\(disp.order)")
             monitors.append(Monitor(identity: disp.identity, link: link))
         }
         for d in displays where !usedDisplays.contains(d.order) { _ = d }  // displays without DDC are not listed (FR1)
         return monitors.sorted { ($0.identity.displayID ?? 0) < ($1.identity.displayID ?? 0) }
+    }
+
+    /// The external DCPAVServiceProxy for a display key (`dispext0`), after its node was replaced by a
+    /// link retrain. With no key, the only external service there is. Caller releases the service.
+    static func findService(displayKey: String?) -> (service: io_service_t, entryID: UInt64)? {
+        let (services, _) = scan()
+        defer { for s in services { IOObjectRelease(s.service) } }
+        let hit: ServiceNode?
+        if let displayKey { hit = services.first { $0.key == displayKey } }
+        else { hit = services.count == 1 ? services[0] : nil }
+        guard let hit else { return nil }
+        var id: UInt64 = 0
+        IORegistryEntryGetRegistryEntryID(hit.service, &id)
+        IOObjectRetain(hit.service)
+        return (hit.service, id)
     }
 
     static func scan() -> ([ServiceNode], [DisplayNode]) {

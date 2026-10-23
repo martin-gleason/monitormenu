@@ -57,8 +57,10 @@ public final class Monitor {
         if let allowed = caps.values(for: code), !allowed.isEmpty {
             guard value <= 0xFF, allowed.contains(UInt8(value)) else { throw DDCError.valueNotAdvertised(code: code, value: value) }
         } else {
-            lock.lock(); let max = maxima[code]; lock.unlock()
-            if let max, value > max { throw DDCError.valueNotAdvertised(code: code, value: value) }
+            // A continuous code is never written before its range is known (A2-3, M9): read it once, then bound.
+            lock.lock(); var max = maxima[code]; lock.unlock()
+            if max == nil { max = try get(code).maximum }
+            if let max, max > 0, value > max { throw DDCError.valueNotAdvertised(code: code, value: value) }
         }
         try link.writeUnchecked(code, value)
     }

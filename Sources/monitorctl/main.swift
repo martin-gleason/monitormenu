@@ -106,8 +106,8 @@ case "set":
         case "input":
             guard let code = VCP.inputCode(from: args[2]) else { fail("unknown input \(args[2])") }
             try m.setInput(code); print("\(shown(m)): input → \(VCP.label(code: VCP.inputSource, value: code))")
-        case "brightness": guard let v = UInt16(args[2]) else { fail("number 0–100") }; try m.setBrightness(v); print("\(shown(m)): brightness → \(v)")
-        case "contrast": guard let v = UInt16(args[2]) else { fail("number 0–100") }; try m.setContrast(v); print("\(shown(m)): contrast → \(v)")
+        case "brightness": guard let v = UInt16(args[2]), v <= 100 else { fail("number 0–100") }; try m.setBrightness(v); print("\(shown(m)): brightness → \(v)")
+        case "contrast": guard let v = UInt16(args[2]), v <= 100 else { fail("number 0–100") }; try m.setContrast(v); print("\(shown(m)): contrast → \(v)")
         case "power":
             let v: UInt8 = args[2] == "standby" ? 0x04 : args[2] == "on" ? 0x01 : args[2] == "off" ? 0x05 : UInt8(args[2].replacingOccurrences(of: "0x", with: ""), radix: 16) ?? 0
             try m.setPower(v); print("\(shown(m)): power → \(VCP.label(code: VCP.powerMode, value: v))")

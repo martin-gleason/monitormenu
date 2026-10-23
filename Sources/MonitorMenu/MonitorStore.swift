@@ -35,6 +35,10 @@ final class MonitorStore {
     /// (PiP on/off and input switches both make macOS reconfigure the display) is not dropped.
     private var knownCapabilities: [String: Capabilities] = [:]
     private var emptyRetries = 0
+    /// One discovery at a time (A2-7): a request that arrives during one runs once after it, however many asked.
+    private var discoverInFlight = false
+    private var discoverQueued = false
+    private var rereadQueued = false
 
     init() {
         // Any completed reconfiguration — a PiP or input change is a mode change, not an add or remove —
@@ -60,38 +64,53 @@ final class MonitorStore {
     }
 
     /// Finds monitors and reads each one's capabilities and state. Displays without DDC are dropped (FR1, D4).
-    func discover() {
-        work.async { [weak self] in
+    /// `rereadCapabilities`: the user's Rescan; otherwise a monitor seen before keeps its cached capabilities
+    /// (they are fixed per monitor, and the 493-byte read costs about 2.3 s on the G3223D).
+    func discover(rereadCapabilities: Bool = false) {
+        onMain { [weak self] in
             guard let self else { return }
-            let found = self.discoverSync()
-            DispatchQueue.main.async {
-                self.states = found; self.onChange?()
-                // A display came and went during a link renegotiation, or CoreGraphics had not paired it yet:
-                // look again shortly, a few times.
-                if found.isEmpty || found.contains(where: { $0.displayID == nil }), self.emptyRetries < 3 {
-                    self.emptyRetries += 1
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.discover() }
-                } else { self.emptyRetries = 0 }
+            if self.discoverInFlight { self.discoverQueued = true; self.rereadQueued = self.rereadQueued || rereadCapabilities; return }
+            self.discoverInFlight = true
+            self.work.async { [weak self] in
+                guard let self else { return }
+                let found = self.discoverSync(rereadCapabilities: rereadCapabilities)
+                DispatchQueue.main.async {
+                    self.discoverInFlight = false
+                    self.states = found; self.onChange?()
+                    if self.discoverQueued {
+                        self.discoverQueued = false; let reread = self.rereadQueued; self.rereadQueued = false
+                        self.discover(rereadCapabilities: reread)
+                    } else if found.isEmpty || found.contains(where: { $0.displayID == nil }), self.emptyRetries < 3 {
+                        // A display came and went during a link renegotiation, or CoreGraphics had not paired it yet:
+                        // look again shortly, a few times.
+                        self.emptyRetries += 1
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.discover() }
+                    } else { self.emptyRetries = 0 }
+                }
             }
         }
     }
 
     /// Runs on the work queue. Main must never block on the work queue (it does not: every DDC call is
     /// dispatched asynchronously from main), or the one `main.sync` hop here would deadlock.
-    private func discoverSync() -> [MonitorState] {
+    private func discoverSync(rereadCapabilities: Bool = false) -> [MonitorState] {
             var found: [MonitorState] = []
             let known = DispatchQueue.main.sync { self.knownCapabilities }   // one hop, before any DDC work
             let discovered = MonitorDiscovery.discover()
             for m in discovered {
                 var s = MonitorState(monitor: m)
                 let key = m.identity.key
-                do {
-                    let caps = try m.loadCapabilities()
-                    DispatchQueue.main.async { self.knownCapabilities[key] = caps }
-                } catch {
-                    s.lastError = "\(error)"
-                    // Not answering right now. Keep it if we have ever read its capabilities; otherwise it is not a DDC monitor.
-                    if let caps = known[key] { m.adopt(capabilities: caps) } else { continue }
+                if let caps = known[key], !rereadCapabilities {
+                    m.adopt(capabilities: caps)
+                } else {
+                    do {
+                        let caps = try m.loadCapabilities()
+                        DispatchQueue.main.async { self.knownCapabilities[key] = caps }
+                    } catch {
+                        s.lastError = "\(error)"
+                        // Not answering right now. Keep it if we have ever read its capabilities; otherwise it is not a DDC monitor.
+                        if let caps = known[key] { m.adopt(capabilities: caps) } else { continue }
+                    }
                 }
                 s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes()
                 self.readValues(into: &s)
@@ -123,6 +142,14 @@ final class MonitorStore {
                 }
             }
         }
+    }
+
+    /// An I/O failure or a timeout: the handle or the monitor is gone, and only rediscovery helps. A
+    /// whitelist refusal or a bad reply is not transport loss and is never retried this way.
+    static func isTransportLoss(_ e: Error) -> Bool {
+        if case DDCError.ioFailed = e { return true }
+        if case DDCError.timeout = e { return true }
+        return false
     }
 
     private func onMain(_ body: @escaping () -> Void) {
@@ -157,8 +184,8 @@ final class MonitorStore {
                 do { try action(monitor) } catch let first {
                     NSLog("MonitorMenu: action on %@ failed: %@", id, "\(first)")
                     err = "\(first)"
-                    if case DDCError.ioFailed = first {
-                        // The display retrained its link and the IOAVService is gone (MACH_SEND_INVALID_DEST). The
+                    if Self.isTransportLoss(first) {
+                        // The display retrained its link and its service is gone, or the transport hung (A2-1). The
                         // monitor can be absent from the registry for a second or two: rediscover and retry, up to
                         // three rounds a second apart.
                         for round in 1...3 {
@@ -167,7 +194,7 @@ final class MonitorStore {
                             if !fresh.isEmpty { DispatchQueue.main.async { self.states = fresh; self.onChange?() } }
                             guard let again = fresh.first(where: { $0.id == id })?.monitor else { continue }
                             do { try action(again); err = nil; NSLog("MonitorMenu: retry %d on fresh service succeeded", round); break }
-                            catch { err = "retry \(round): \(error)"; if case DDCError.ioFailed = error { continue } else { break } }
+                            catch { err = "retry \(round): \(error)"; if Self.isTransportLoss(error) { continue } else { break } }
                         }
                     }
                 }

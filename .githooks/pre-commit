@@ -11,7 +11,7 @@ echo "pre-commit: executed=$n floor=$floor"
 GEN=~/Local_Dev_Projects/turing-review/scripts/gen_status.py
 if [[ -f "$GEN" ]]; then python3 "$GEN" . --check || { echo "pre-commit: status page is stale — run: python3 $GEN ."; exit 1; }; fi
 added=$(git diff --cached -U0 | grep -E '^\+' | grep -vE '^\+\+\+')
-if printf '%s\n' "$added" | grep -qiE '(api[_-]?key|secret|password|passwd|token|authorization)["'"'"']?\s*[:=]\s*["'"'"']?[A-Za-z0-9/+_.=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{20,}\b|\bsk-[A-Za-z0-9]{20,}\b|\bxox[baprs]-[A-Za-z0-9-]{10,}\b|Bearer [A-Za-z0-9._-]{20,}'; then
-  echo "pre-commit: possible secret in the diff:"; printf '%s\n' "$added" | grep -iE 'key|secret|password|passwd|token|authorization|AKIA|gh[pousr]_|sk-|xox|Bearer' | head -3 | cut -c1-120 | sed 's/^/  /'; exit 1
+if printf '%s\n' "$added" | grep -qiE '(api[_-]?key|secret[a-z_]*|password|passwd|token|authorization)["'"'"']?\s*[:=]\s*["'"'"']?[A-Za-z0-9/+_.=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{20,}\b|\bsk-[A-Za-z0-9]{20,}\b|\bsk_(live|test)_[A-Za-z0-9]{10,}\b|\bxox[baprs]-[A-Za-z0-9-]{10,}\b|Bearer [A-Za-z0-9._-]{20,}'; then
+  echo "pre-commit: possible secret in the diff:"; printf '%s\n' "$added" | grep -iE 'key|secret|password|passwd|token|authorization|AKIA|gh[pousr]_|sk-|sk_live|sk_test|xox|Bearer' | head -3 | cut -c1-120 | sed 's/^/  /'; exit 1
 fi
 exit 0

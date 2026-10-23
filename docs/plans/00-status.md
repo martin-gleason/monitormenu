@@ -18,7 +18,7 @@ Named, never numbered (`D2`). **No source read here marks a milestone as the cur
 | Milestone | Decisions landing here | Units |
 |---|---|---|
 | MVP | 12 | C1, F1 |
-| v1.0 | 1 | F2 |
+| v1.0 | 1 | F1b, F2 |
 
 ## Features and chores
 
@@ -27,7 +27,8 @@ Status is what the unit's own plan header declares. What has landed in git is de
 | ID | Kind | Status | Milestone | P | Owner | Plan | Tasks |
 |---|---|---|---|---|---|---|---|
 | C1 | chore | done 2026-10-19 | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
-| F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass owed (`A2`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
+| F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass done 2026-10-23, fixed in `F1b` (`docs/plans/F1b.md`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
+| F1b | feature | built 2026-10-23; no gate (defect fixes from the second adversarial pass, `A2`, plus `A1`, whose decision criterion in the register was met by measurement) | v1.0 | — | agent | `docs/plans/F1b.md` | 5 planned |
 | F2 | feature | built 2026-10-21 (gate crossed 2026-10-21); adversarially reviewed 2026-10-22, one major and nine minors, all fixed but one accepted (`docs/reviews/F2.md`) | v1.0 | — | agent | `docs/plans/F2.md` | 3 planned |
 
 ## Registers
@@ -39,9 +40,9 @@ Counted from the register itself. A register with no rows still gets a line.
 | Decisions (`D`) | 13 | 9 | 0 | 4 |
 | Risks (`RR`) | 9 | 6 | 0 | 3 |
 | Owner items (`O`) | 14 | 5 | 0 | 9 |
-| Agent items (`A`) | 3 | 2 | 0 | 1 |
+| Agent items (`A`) | 3 | 0 | 0 | 3 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
-| Mutations (`M`) | 7 | 0 | 0 | 7 |
+| Mutations (`M`) | 9 | 0 | 0 | 9 |
 | Chores (`C`) | 2 | 0 | 0 | 2 |
 | Gates (`G`) | 3 | 0 | 0 | 3 |
 
@@ -57,11 +58,10 @@ Counted from the register itself. A register with no rows still gets a line.
 | `O` | closed | 9 |
 | `O` | held | 1 |
 | `O` | open | 4 |
-| `A` | closed | 1 |
-| `A` | open | 2 |
+| `A` | closed | 3 |
 | `H` | built | 6 |
 | `H` | open | 1 |
-| `M` | killed | 7 |
+| `M` | killed | 9 |
 | `C` | done | 2 |
 | `G` | done | 3 |
 
@@ -105,10 +105,8 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm MonitorMenu's actions are listed (done 2026-10-… |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
-| unassigned | A1 | P2 | open | Re-create the IOAVService per transaction instead of holding one, so a link retrain never leaves a dead handle and the a… |
-| unassigned | A2 | P1 | open | Second adversarial pass over the post-review fixes (docs/reviews/F1.md § Not re-reviewed). |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
 
 ---
 
-23 open register rows.
+21 open register rows.
