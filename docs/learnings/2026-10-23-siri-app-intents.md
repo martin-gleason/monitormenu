@@ -1,0 +1,28 @@
+# Siri, App Shortcuts and a SwiftPM-built menu bar app
+
+Created: 2026-10-23 11:05 -05:00 · Edited: 2026-10-23 11:05 -05:00
+
+Research done on the owner's instruction before testing Siri further (`O9`, `A4`). What is established, what is anecdotal, and what it changes.
+
+## What Siri needs from an app (established)
+
+- **Phrases are matched word for word**, each must contain the app's name, and a phrase may carry a parameter only when its values are a fixed set (an `AppEnum`). A phrase with a number or free text makes the whole provider invisible to Siri; Apple DTS said so in [Inform iOS about AppShortcutsProvider](https://developer.apple.com/forums/thread/771507). MonitorMenu complies: input and PiP mode are enums, brightness and contrast phrases carry no number and Siri asks for it.
+- **The app hands Siri its phrases at launch** with `updateAppShortcutParameters()`; MonitorMenu never called it until `F1c` ([Apple reference](https://developer.apple.com/documentation/appintents/appshortcutsprovider/updateappshortcutparameters())).
+- **Intents run in the background unless told otherwise.** `openAppWhenRun` is the old way to say "bring the app forward"; the macOS 26 SDK deprecates it for `supportedModes` ([Add App Intents to open SwiftUI screens](https://www.theswift.dev/posts/add-app-intents-to-open-swiftui-screens-from-spotlight/), [Apple reference](https://developer.apple.com/documentation/appintents/appintent/supportedmodes)). `F1c` removed it from the switcher intent; the app is a menu bar agent and opens its own panel.
+- **Shortcuts working while Siri fails is a known split**, usually the app's own `perform` failing or timing out, not the phrase ([Can't debug failed Shortcut intent launch](https://developer.apple.com/forums/thread/651961), [WWDC20 Siri errors](https://developer.apple.com/videos/play/wwdc2020/10074/)).
+
+## The build (established on this Mac)
+
+- Xcode's App Intents step is two tools: `appintentsmetadataprocessor` (writes `Metadata.appintents`) and `appintentsnltrainingprocessor` (writes `nlu.appintents`, the flexible-matching assets) ([rules_apple #3086](https://github.com/bazelbuild/rules_apple/issues/3086), [ambysto spike](https://github.com/ambysto/ambysto-kit/pull/30)). Without the second, Siri answers only exact phrases.
+- **Xcode does not run the second tool for macOS either**: the Xcode-built control app `IntentProbe` has the same two files as the SwiftPM-built MonitorMenu (`extract.actionsdata`, `version.json`) and its build log shows only the metadata processor, with `APP_SHORTCUTS_ENABLE_FLEXIBLE_MATCHING = YES`. So the SwiftPM build is not behind Xcode here, and exact phrases are all either app offers.
+- Nothing found says App Shortcuts need App Store distribution; Developer ID signing is what Gatekeeper wants ([Apple, distribute outside the Mac App Store](https://help.apple.com/xcode/mac/current/en.lproj/dev033e997ca.html)).
+
+## What "restriction" can mean on macOS 27 (partly anecdotal)
+
+- Siri's "can't open X because of a restriction on your device" / "because it's restricted" wording is not documented anywhere found. The nearest documented block is **Screen Time → Content & Privacy → Siri → Allowed Siri Version** (Don't Allow / Siri AI (Beta) / Siri Classic) ([10 settings to change after installing macOS 27](https://www.ithinkdiff.com/10-settings-to-change-after-installing-macos-27/)), and an Apple Community report of "You do not have permission to use Siri" caused by Screen Time ([Apple Community](https://discussions.apple.com/thread/255879953)).
+- **System Settings → Siri → App Access** is per app, but Apple describes it as "the apps you want Siri to learn from and show Siri suggestions for" ([Siri settings on Mac, macOS 27](https://support.apple.com/guide/mac-help/siri-settings-on-mac-mchl3fd7fc15/mac)); third parties say it is not an action switch ([MacSouverain](https://macsouverain.com/en/siri-ai-mac-iphone-reglages/), [EFF](https://www.eff.org/deeplinks/2026/09/how-limit-what-apples-new-siri-ai-can-access-ios-27)). Worth a look, not the first suspect.
+- macOS 27's Siri is new; one overview says App Intents support "just ships or it doesn't" with no user toggle ([Elephas](https://elephas.app/resources/what-is-app-intents)). Treat as background, not evidence.
+
+## What this changes in the plan
+
+Nothing in the method; it confirms it. The control app is the right instrument because the two bundles are now proven equivalent, so a difference in Siri's answer isolates the one variable left: a windowed app versus a menu bar agent. The Shortcuts-app run of the same action separates Siri from the app's `perform`. Screen Time's Siri version is added as the third check. If the control app also fails, the cause is system-side (Screen Time or the new Siri) and no code change helps.
