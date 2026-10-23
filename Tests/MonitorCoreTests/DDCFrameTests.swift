@@ -44,6 +44,48 @@ final class DDCFrameTests: XCTestCase {
         XCTAssertEqual(DDCFrame.replyChecksum([0x6E, 0x80]), 0xBE, "null message checksum")
     }
 
+    /// Review A2-6: MCCS result byte 0x01 means "unsupported VCP"; its value bytes are not a value.
+    func testUnsupportedResultByteIsRejected() {
+        let r = Fixtures.sealed([0x6E, 0x88, 0x02, 0x01, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00])
+        XCTAssertThrowsError(try DDCFrame.parseVCPReply(r, expecting: 0x60)) { XCTAssertTrue("\($0)".contains("unsupported")) }
+        let (m, ch) = Fixtures.monitor(caps: Fixtures.g3223d); ch.replies = [r]
+        XCTAssertThrowsError(try m.currentInput(), "no input 0x00 out of an unsupported reply")
+    }
+
+    /// M8 (review A2-1): a timed-out call is never retried; the abandoned call is still on the bus and a
+    /// retry would land on top of it. One slow read means one read, and the error comes back at the deadline.
+    func testTimeoutIsNotRetried() {
+        final class Slow: I2CChannel {
+            var reads = 0; let lock = NSLock()
+            func write(_ bytes: [UInt8]) throws {}
+            func read(count: Int) throws -> [UInt8] { lock.lock(); reads += 1; lock.unlock(); Thread.sleep(forTimeInterval: 0.5); return Fixtures.replyVolume81 }
+        }
+        let slow = Slow()
+        let link = DDCMonitorLink(channel: DeadlineChannel(slow, timeout: 0.05), label: "slow")
+        link.timing.replyDelay = 0; link.timing.commandGap = 0   // attempts stay at the shipped default
+        let t0 = Date()
+        XCTAssertThrowsError(try link.read(0x62)) { XCTAssertEqual($0 as? DDCError, .timeout("I2C read")) }
+        XCTAssertLessThan(Date().timeIntervalSince(t0), 0.3, "back at the deadline, not after five attempts")
+        Thread.sleep(forTimeInterval: 0.6)
+        slow.lock.lock(); let reads = slow.reads; slow.lock.unlock()
+        XCTAssertEqual(reads, 1, "exactly one read was issued")
+    }
+
+    /// Review A2-2: a hung channel blocks only its own queue. Many abandoned calls on it must not stop a
+    /// healthy channel from reaching its transport (the old shared pool died at 64).
+    func testHungChannelDoesNotStarveAnother() {
+        final class Hung: I2CChannel {
+            func write(_ bytes: [UInt8]) throws { Thread.sleep(forTimeInterval: 3) }
+            func read(count: Int) throws -> [UInt8] { Thread.sleep(forTimeInterval: 3); return [] }
+        }
+        let hung = DeadlineChannel(Hung(), timeout: 0.01)
+        for _ in 0..<70 { XCTAssertThrowsError(try hung.write([0x01])) }
+        let healthy = DeadlineChannel(RecordingChannel(), timeout: 0.5)
+        let t0 = Date()
+        XCTAssertNoThrow(try healthy.write([0x01]))
+        XCTAssertLessThan(Date().timeIntervalSince(t0), 0.4, "the healthy channel answered at once")
+    }
+
     /// M6: a transport call that never returns must surface as a timeout, not a hang (NFR4).
     func testDeadlineChannelTimesOut() {
         final class Slow: I2CChannel {

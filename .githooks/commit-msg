@@ -1,7 +1,8 @@
 #!/bin/zsh
 # C1-T3: a register ID never appears anywhere in a commit message (conventions § Axis 2).
 # Structural IDs (F1, C1, F1-T2) carry the work. Types are the conventions' seven.
-msg=$(grep -vE '^#' "$1")
+# Apple silicon chip names (M1 Mac, M2 Pro, M4 Max) are not mutation IDs; this project runs only on them (review A2-5).
+msg=$(grep -vE '^#' "$1" | sed -E 's/(^|[^A-Za-z0-9])M[0-9] ?(Mac|MacBook|iMac|Pro|Max|Ultra|mini|chip)([^A-Za-z0-9]|$)/\1Apple-silicon\3/g')
 subject=$(printf '%s\n' "$msg" | head -1)
 if printf '%s' "$msg" | grep -qiE '(^|[^A-Za-z0-9])(D|RR|O|H|M|A|G|FR|NFR)[0-9]+([^A-Za-z0-9]|$)'; then
   echo "commit-msg: register IDs (D, RR, O, H, M, A, G, FR, NFR) never appear in a commit message. Offending line:"

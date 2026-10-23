@@ -18,12 +18,25 @@ final class WhitelistTests: XCTestCase {
     }
 
     func testAdvertisedWritesGoThrough() throws {
-        let (m, ch) = Fixtures.monitor(caps: Fixtures.g3223d)
+        let ch = RecordingChannel(); ch.replies = [Fixtures.sealed([0x6E, 0x88, 0x02, 0x00, 0x10, 0x00, 0x00, 0x64, 0x00, 0x38])]   // brightness 56/100
+        let (m, _) = Fixtures.monitor(caps: Fixtures.g3223d, channel: ch)
         try m.setInput(0x11)
         try m.setBrightness(56)
         try m.setPiPMode(0x24)
         try m.setPower(0x04)
-        XCTAssertEqual(ch.writes, [DDCFrame.setVCP(0x60, 0x11), DDCFrame.setVCP(0x10, 56), DDCFrame.setVCP(0xE9, 0x24), DDCFrame.setVCP(0xD6, 0x04)])
+        XCTAssertEqual(ch.writes, [DDCFrame.setVCP(0x60, 0x11), DDCFrame.getVCP(0x10), DDCFrame.setVCP(0x10, 56), DDCFrame.setVCP(0xE9, 0x24), DDCFrame.setVCP(0xD6, 0x04)],
+                       "the first brightness write is preceded by one read of its range; discrete codes need none")
+    }
+
+    /// M9 (review A2-3): a continuous code is never written before its maximum is known, on any surface.
+    func testContinuousWriteReadsTheMaximumFirst() throws {
+        let ch = RecordingChannel(); ch.replies = [Fixtures.replyRedGain]          // 0x16: max 100
+        let (m, _) = Fixtures.monitor(caps: Fixtures.g3223d, channel: ch)
+        XCTAssertThrowsError(try m.set(0x16, 500)) { XCTAssertEqual($0 as? DDCError, .valueNotAdvertised(code: 0x16, value: 500)) }
+        XCTAssertEqual(ch.writes, [DDCFrame.getVCP(0x16)], "one read of the range, and no set frame reached the bus")
+        XCTAssertThrowsError(try m.set(0x16, 0xFFFF))
+        XCTAssertNoThrow(try m.set(0x16, 100))
+        XCTAssertEqual(ch.writes.count, 2, "the range was read once; the accepted write is the only set frame")
     }
 
     func testFactoryResetCodesAreNeverOffered() {

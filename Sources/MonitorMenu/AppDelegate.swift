@@ -202,7 +202,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let a = sender.representedObject as? Action else { return }
         store.perform(on: a.id, { try $0.setPower(a.code) }, completion: report)
     }
-    @objc private func rescan() { store.discover() }
+    @objc private func rescan() { store.discover(rereadCapabilities: true) }
 
     /// FR10: one alert with a text field. Empty clears the name. Re-reads the menu afterwards.
     @objc private func renameMonitor(_ sender: NSMenuItem) {

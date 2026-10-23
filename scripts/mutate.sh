@@ -33,7 +33,15 @@ case "$id" in
       from='let n = all[identity.key]?'
       to='let n = all["\(identity.displayID ?? 0)"]?'
       filter=MonitorNamesTests/testNamesAreKeyedBySerialNotDisplayID ;;
-  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4|M5|M6|M7"; exit 2 ;;
+  M8) file=Sources/MonitorCore/DDCProtocol.swift
+      from='if case DDCError.timeout = error { throw error }'
+      to='if case DDCError.timeout = error { _ = error }'
+      filter=DDCFrameTests/testTimeoutIsNotRetried ;;
+  M9) file=Sources/MonitorCore/Monitor.swift
+      from='if max == nil { max = try get(code).maximum }'
+      to='if max == nil { max = nil }'
+      filter=WhitelistTests/testContinuousWriteReadsTheMaximumFirst ;;
+  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4|M5|M6|M7|M8|M9"; exit 2 ;;
 esac
 if ! git diff --quiet -- "$file"; then echo "$file has uncommitted changes; refusing to mutate"; exit 2; fi
 if ! grep -qF -- "$from" "$file"; then echo "$id: pattern not found in $file — the mutation no longer applies"; exit 2; fi

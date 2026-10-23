@@ -100,7 +100,7 @@ final class Actions {
         return store.names.displayName(for: s.identity)
     }
 
-    func rescan() { store.discover() }
+    func rescan() { store.discover(rereadCapabilities: true) }
 
     /// monitormenu://input/hdmi2?display=dell · brightness/60 · contrast/70 · pip/small · pip-source/hdmi1 · sleep · switcher · rescan · rename/Desk?display=dell
     func handle(url: URL) async throws -> String {

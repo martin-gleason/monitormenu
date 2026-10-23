@@ -58,6 +58,8 @@ public enum DDCFrame {
         guard v[2] == 0x02 else { throw DDCError.badReply(String(format: "opcode 0x%02X, expected 0x02", v[2])) }
         guard v[4] == code else { throw DDCError.badReply(String(format: "reply for 0x%02X, asked 0x%02X", v[4], code)) }
         let supported = v[3] == 0x00
+        // MCCS result 0x01: the monitor says it does not support this code. Its value bytes are noise (A2-6).
+        guard supported else { throw DDCError.badReply(String(format: "monitor reports VCP 0x%02X unsupported (result 0x%02X)", code, v[3])) }
         let maximum = UInt16(v[6]) << 8 | UInt16(v[7])
         let current = UInt16(v[8]) << 8 | UInt16(v[9])
         return VCPReply(code: code, current: current, maximum: maximum, supported: supported)
@@ -120,6 +122,7 @@ public final class DDCMonitorLink {
             defer { lastCommand = Date() }
             do { return try body() } catch {
                 if case DDCError.ioFailed(_, let rc) = error, rc == Self.serviceGone { throw error }   // fail fast; caller rediscovers
+                if case DDCError.timeout = error { throw error }   // a hung transport is a rediscovery case; a retry would stack calls on the bus (A2-1, M8)
                 last = error; Thread.sleep(forTimeInterval: backoff); backoff = min(backoff * 2, 1.0)
             }
         }
