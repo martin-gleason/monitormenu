@@ -38,8 +38,8 @@ Counted from the register itself. A register with no rows still gets a line.
 |---|---|---|---|---|
 | Decisions (`D`) | 13 | 9 | 0 | 4 |
 | Risks (`RR`) | 9 | 6 | 0 | 3 |
-| Owner items (`O`) | 14 | 6 | 0 | 8 |
-| Agent items (`A`) | 3 | 3 | 0 | 0 |
+| Owner items (`O`) | 14 | 5 | 0 | 9 |
+| Agent items (`A`) | 3 | 2 | 0 | 1 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
 | Mutations (`M`) | 7 | 0 | 0 | 7 |
 | Chores (`C`) | 2 | 0 | 0 | 2 |
@@ -54,10 +54,11 @@ Counted from the register itself. A register with no rows still gets a line.
 | `D` | superseded | 1 |
 | `RR` | open | 6 |
 | `RR` | resolved | 3 |
-| `O` | closed | 8 |
+| `O` | closed | 9 |
 | `O` | held | 1 |
-| `O` | open | 5 |
-| `A` | open | 3 |
+| `O` | open | 4 |
+| `A` | closed | 1 |
+| `A` | open | 2 |
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 7 |
@@ -101,15 +102,13 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D11 | — | proposed | switchctl has no raw set <code> <value>; writes are limited to the spec's controls (input, brightness, contrast, power, … |
 | owner | O5 | P1 | open | Sit at the G3223D for ten minutes while the agent steps through the 0xE9 values and say what each one shows. Closes RR5.… |
 | owner | O6 | P2 | open | Ratify D1–D6. |
-| owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm SwitchBar's actions are listed; then ask Siri t… |
+| owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm MonitorMenu's actions are listed (done 2026-10-… |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
-| owner | O14 | P0 | open | In the Shortcuts app, click All Actions, then the Apps list: look for MonitorMenu (six actions) and IntentProbe (one act… |
 | unassigned | A1 | P2 | open | Re-create the IOAVService per transaction instead of holding one, so a link retrain never leaves a dead handle and the a… |
 | unassigned | A2 | P1 | open | Second adversarial pass over the post-review fixes (docs/reviews/F1.md § Not re-reviewed). |
-| unassigned | A3 | P0 | open | FR9 defect: the Shortcuts app does not list MonitorMenu's actions. 2026-10-21: the installed bundle was LaunchServices-f… |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
 
 ---
 
-25 open register rows.
+23 open register rows.
