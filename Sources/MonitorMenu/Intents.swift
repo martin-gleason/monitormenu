@@ -99,5 +99,12 @@ struct MonitorMenuShortcuts: AppShortcutsProvider {
         AppShortcut(intent: SetPiPIntent(),
                     phrases: ["Set picture in picture to \(\.$mode) with \(.applicationName)"],
                     shortTitle: "Picture-in-Picture", systemImageName: "pip")
+        // A number cannot ride in a phrase; Siri asks for it after the phrase (review O9, 2026-10-23).
+        AppShortcut(intent: SetBrightnessIntent(),
+                    phrases: ["Set my monitor brightness with \(.applicationName)", "\(.applicationName) brightness"],
+                    shortTitle: "Brightness", systemImageName: "sun.max")
+        AppShortcut(intent: SetContrastIntent(),
+                    phrases: ["Set my monitor contrast with \(.applicationName)", "\(.applicationName) contrast"],
+                    shortTitle: "Contrast", systemImageName: "circle.lefthalf.filled")
     }
 }
