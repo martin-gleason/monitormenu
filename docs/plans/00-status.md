@@ -28,7 +28,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 |---|---|---|---|---|---|---|---|
 | C1 | chore | done 2026-10-19 | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
 | F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass owed (`A2`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
-| F2 | feature | built 2026-10-21 (gate crossed 2026-10-21); adversarial review pending | v1.0 | — | agent | `docs/plans/F2.md` | 3 planned |
+| F2 | feature | built 2026-10-21 (gate crossed 2026-10-21); adversarially reviewed 2026-10-22, one major and nine minors, all fixed but one accepted (`docs/reviews/F2.md`) | v1.0 | — | agent | `docs/plans/F2.md` | 3 planned |
 
 ## Registers
 

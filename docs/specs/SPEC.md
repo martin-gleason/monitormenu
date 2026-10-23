@@ -2,7 +2,7 @@
 
 Control your monitor from your desktop, menubar, or shortcut.
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 17:34 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-21 (FR10 added on the owner's instruction, D13)
 
 > **Vision sentence status: ratified. The owner's own sentence of 2026-10-19 (D8), pasted here on the owner's instruction; the earlier agent-punctuated draft is in the register's D8 row.**
 
