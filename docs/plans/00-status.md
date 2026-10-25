@@ -41,7 +41,7 @@ Counted from the register itself. A register with no rows still gets a line.
 |---|---|---|---|---|
 | Decisions (`D`) | 15 | 10 | 0 | 5 |
 | Risks (`RR`) | 9 | 6 | 0 | 3 |
-| Owner items (`O`) | 14 | 5 | 0 | 9 |
+| Owner items (`O`) | 14 | 4 | 0 | 10 |
 | Agent items (`A`) | 4 | 0 | 0 | 4 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
 | Mutations (`M`) | 9 | 0 | 0 | 9 |
@@ -57,9 +57,9 @@ Counted from the register itself. A register with no rows still gets a line.
 | `D` | superseded | 1 |
 | `RR` | open | 6 |
 | `RR` | resolved | 3 |
-| `O` | closed | 9 |
+| `O` | closed | 10 |
 | `O` | held | 1 |
-| `O` | open | 4 |
+| `O` | open | 3 |
 | `A` | closed | 4 |
 | `H` | built | 6 |
 | `H` | open | 1 |
@@ -105,11 +105,10 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D14 | — | proposed | Show a monitor-side lock instead of dead sliders. When a monitor reports a preset that locks brightness and contrast (th… |
 | owner | O5 | P1 | open | Sit at the G3223D for ten minutes while the agent steps through the 0xE9 values and say what each one shows. Closes RR5.… |
 | owner | O6 | P2 | open | Ratify D1–D6. |
-| owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm MonitorMenu's actions are listed (done 2026-10-… |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
 
 ---
 
-22 open register rows.
+21 open register rows.
