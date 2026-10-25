@@ -19,6 +19,7 @@ Named, never numbered (`D2`). **No source read here marks a milestone as the cur
 |---|---|---|
 | MVP | 12 | C1, F1 |
 | v1.0 | 2 | F1b, F1c, F2 |
+| v1.5 | 1 | — |
 
 ## Features and chores
 
@@ -38,32 +39,28 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
-| Decisions (`D`) | 14 | 10 | 0 | 4 |
+| Decisions (`D`) | 15 | 10 | 0 | 5 |
 | Risks (`RR`) | 9 | 6 | 0 | 3 |
 | Owner items (`O`) | 14 | 5 | 0 | 9 |
-| Agent items (`A`) | 4 | 0 | 1 | 3 |
+| Agent items (`A`) | 4 | 0 | 0 | 4 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
 | Mutations (`M`) | 9 | 0 | 0 | 9 |
 | Chores (`C`) | 3 | 0 | 0 | 3 |
 | Gates (`G`) | 3 | 0 | 0 | 3 |
-
-`Unknown` is not a third kind of open. It means the source document said nothing about status, so the page will not guess — the row is a question for the owner (`RR37`).
-
 
 ### By status
 
 | Register | Status | Count |
 |---|---|---|
 | `D` | proposed | 10 |
-| `D` | ratified | 3 |
+| `D` | ratified | 4 |
 | `D` | superseded | 1 |
 | `RR` | open | 6 |
 | `RR` | resolved | 3 |
 | `O` | closed | 9 |
 | `O` | held | 1 |
 | `O` | open | 4 |
-| `A` | closed | 3 |
-| `A` | unknown | 1 |
+| `A` | closed | 4 |
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 9 |
@@ -111,9 +108,8 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | O9 | P1 | open | With the installed app launched once, open the Shortcuts app and confirm MonitorMenu's actions are listed (done 2026-10-… |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
-| unassigned | A4 | P1 | unknown | FR9 defect: Siri does not know the app's phrases. Found by O9 on 2026-10-23. The provider was never handed to Siri at la… |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
 
 ---
 
-23 open register rows.
+22 open register rows.
