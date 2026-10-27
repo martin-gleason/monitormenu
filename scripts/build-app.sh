@@ -1,5 +1,6 @@
 #!/bin/zsh
-# F1-T6: build a release binary and wrap it in a .app bundle, ad-hoc signed with hardened runtime.
+# Created: 2026-10-19 19:52 -05:00 · Edited: 2026-10-27 09:26 -05:00
+# F1-T6: build a release binary and wrap it in a .app bundle, Developer ID signed with hardened runtime.
 #   scripts/build-app.sh            -> build/MonitorMenu.app
 #   scripts/build-app.sh --install  -> also copies to ~/Applications/MonitorMenu.app and links monitorctl
 # App Intents metadata (FR9): SwiftPM on this toolchain emits .swiftconstvalues; Xcode's
@@ -57,9 +58,13 @@ if [ -z "$IDENTITY" ]; then
   if [ "${ALLOW_ADHOC:-0}" = "1" ]; then IDENTITY="-"; echo "No Developer ID identity found; ALLOW_ADHOC=1 set, signing ad hoc (Shortcuts will not list the actions)"
   else echo "error: no 'Developer ID Application' identity in the keychain. Set SIGN_IDENTITY=<name> or ALLOW_ADHOC=1 to sign ad hoc." >&2; exit 1; fi
 fi
-echo "Signing as: $IDENTITY"
-codesign --force --options runtime --timestamp=none --entitlements Resources/MonitorMenu.entitlements --sign "$IDENTITY" "$APP/Contents/MacOS/monitorctl"
-codesign --force --options runtime --timestamp=none --entitlements Resources/MonitorMenu.entitlements --sign "$IDENTITY" "$APP"
+# Apple's secure timestamp (network) is what notarization expects (C4-T6, review C4 #4); ad hoc cannot carry one.
+# CODESIGN_TIMESTAMP=none skips it offline. A codesign that sits still is the keychain prompt, not the server:
+# on 2026-10-27 it hung the same way with the timestamp off, and `sample` showed it waiting on SecurityAgent.
+TS="--timestamp"; if [ "$IDENTITY" = "-" ] || [ "${CODESIGN_TIMESTAMP:-}" = "none" ]; then TS="--timestamp=none"; fi
+echo "Signing as: $IDENTITY ($TS)"
+codesign --force --options runtime $TS --entitlements Resources/MonitorMenu.entitlements --sign "$IDENTITY" "$APP/Contents/MacOS/monitorctl"
+codesign --force --options runtime $TS --entitlements Resources/MonitorMenu.entitlements --sign "$IDENTITY" "$APP"
 xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
 echo "Built $APP"
 if [[ "${1:-}" == "--install" ]]; then
