@@ -134,4 +134,4 @@ Named ways to break the code, each paired with the test that must catch it. A te
 | M10 | `Sources/MonitorCore/Monitor.swift` | Treat `0xF0` = `0x34` as a lock for every vendor, not only the one in the table | `LockTests.testLockIsVendorKeyed` | run — killed 2026-10-27: 4 failures / 1 test (`scripts/mutate.sh M10`) |
 | M11 | `Sources/MonitorCore/Monitor.swift` | Write brightness while the last lock read said locked | `LockTests.testLockedCodesAreNotWritten` | run — killed 2026-10-27: 2 failures / 1 test (`scripts/mutate.sh M11`) |
 | M12 | `Sources/MonitorCore/CapabilitiesCache.swift` | Serve a cached capabilities string to a monitor with a different key | `CapabilitiesCacheTests.testCacheIsPerMonitor` | proposed |
-| M13 | `Sources/MonitorCore/Monitor.swift` | Guess "unlocked" instead of reading when the lock state is unknown (review F3 #1) | `LockTests.testFailedLockReadIsNotStale` | proposed |
+| M13 | `Sources/MonitorCore/Monitor.swift` | Guess "unlocked" instead of reading when the lock state is unknown (review F3 #1) | `LockTests.testFailedLockReadIsNotStale` | run — killed 2026-10-27: 2 failures / 1 test (`scripts/mutate.sh M13`) |
