@@ -18,6 +18,18 @@ public enum VCP {
     ]
     public static func pipCodes(vendor: UInt32) -> (mode: UInt8, source: UInt8)? { vendorPiPCodes[vendor] }
 
+    /// A preset that makes the monitor ignore brightness and contrast writes (D14, NFR8). Per vendor,
+    /// consulted only when the capabilities string advertises the code. Dell: preset code `0xF0` reads
+    /// `0x34` with Smart HDR on (`C3`, 2026-10-23); the OSD greys both sliders out in that state. The
+    /// other Smart HDR modes' values are unknown until the owner reads them (`O15`).
+    public struct LockingPreset { public let code: UInt8; public let values: Set<UInt8>; public let label: String }
+    public static let lockingPresets: [UInt32: LockingPreset] = [
+        0x10AC: LockingPreset(code: 0xF0, values: [0x34], label: "Smart HDR"),
+    ]
+    public static func lockingPreset(vendor: UInt32) -> LockingPreset? { lockingPresets[vendor] }
+    /// The codes such a preset locks.
+    public static let lockedCodes: Set<UInt8> = [brightness, contrast]
+
     /// off · small · large · split (also pip/on/pbp/half) · 0xNN · decimal → the PiP mode value.
     public static func pipCode(from text: String) -> UInt8? {
         let key = text.lowercased().trimmingCharacters(in: .whitespaces)

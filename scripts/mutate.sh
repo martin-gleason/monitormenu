@@ -41,7 +41,15 @@ case "$id" in
       from='if max == nil { max = try get(code).maximum }'
       to='if max == nil { max = nil }'
       filter=WhitelistTests/testContinuousWriteReadsTheMaximumFirst ;;
-  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4|M5|M6|M7|M8|M9"; exit 2 ;;
+  M10) file=Sources/MonitorCore/Monitor.swift
+      from='guard let p = VCP.lockingPreset(vendor: identity.vendor), capabilities?.advertises(p.code) == true else { return nil }'
+      to='guard let p = VCP.lockingPreset(vendor: 0x10AC), capabilities?.advertises(p.code) == true else { return nil }'
+      filter=LockTests/testLockIsVendorKeyed ;;
+  M11) file=Sources/MonitorCore/Monitor.swift
+      from='if VCP.lockedCodes.contains(code), let by = lockedBy { throw DDCError.locked(code: code, by: by) }'
+      to='if VCP.lockedCodes.contains(code), let by = lockedBy { _ = by }'
+      filter=LockTests/testLockedCodesAreNotWritten ;;
+  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4|M5|M6|M7|M8|M9|M10|M11"; exit 2 ;;
 esac
 if ! git diff --quiet -- "$file"; then echo "$file has uncommitted changes; refusing to mutate"; exit 2; fi
 if ! grep -qF -- "$from" "$file"; then echo "$id: pattern not found in $file — the mutation no longer applies"; exit 2; fi
