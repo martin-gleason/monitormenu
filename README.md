@@ -1,6 +1,6 @@
 # MonitorMenu
 
-Created: 2026-10-19 19:22 -05:00 · Edited: 2026-10-27 09:26 -05:00
+Created: 2026-10-19 19:22 -05:00 · Edited: 2026-10-27 09:54 -05:00
 
 [![ci](https://github.com/martin-gleason/monitormenu/actions/workflows/ci.yml/badge.svg)](https://github.com/martin-gleason/monitormenu/actions/workflows/ci.yml)
 
@@ -39,4 +39,4 @@ MonitorMenu only offers and sends what your monitor advertises in its DDC capabi
 
 ## Development
 
-`swift test` runs the offline suite. `MONITORMENU_LIVE=1 swift test` adds a read-only check against the attached monitor. `scripts/mutate.sh M1` proves a test can fail. See `docs/specs/SPEC.md` for the contract and `docs/plans/` for the build record.
+`swift test` runs the offline suite. `MONITORMENU_LIVE=1 swift test` adds a read-only check against the attached monitor. `scripts/mutate.sh M1` proves a test can fail. The app logs discovery and refresh timings and every failed action: `/usr/bin/log show --last 10m --predicate 'subsystem == "dev.marty.MonitorMenu"' --info --style compact` (the full path matters: zsh has its own `log` builtin). See `docs/specs/SPEC.md` for the contract and `docs/plans/` for the build record.
