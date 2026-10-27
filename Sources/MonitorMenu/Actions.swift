@@ -1,9 +1,11 @@
+// Created: 2026-10-19 19:52 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import Foundation
 import CoreGraphics
 import MonitorCore
 
 /// The one action layer behind the menu, the hotkey switcher, the URL scheme and the intents (D6, D9).
-/// Resolves "which monitor" the same way everywhere: by name substring, else the first one.
+/// Resolves "which monitor" the same way everywhere, through `MonitorNames.match` (FR10): exact user name,
+/// serial, display id, exact model name, then substrings; two hits is an error, never a guess.
 @MainActor
 final class Actions {
     static var shared: Actions!

@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-27 09:09 -05:00
+// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import AppKit
 
 /// A menu row with a label and a slider (brightness, contrast). Dragging writes after a short pause.

@@ -1,4 +1,5 @@
 #!/bin/zsh
+# Created: 2026-10-19 19:22 -05:00 · Edited: 2026-10-27 09:26 -05:00
 # C1-T2: prints one integer — the number of tests `swift test` actually executed.
 # An exit code cannot show a suite that stopped running; this count can.
 set -uo pipefail

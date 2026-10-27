@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:09 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import Foundation
 
 /// MCCS codes the app knows how to label. Anything else the monitor advertises is still
