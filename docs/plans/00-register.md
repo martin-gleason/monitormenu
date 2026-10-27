@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-27 09:00 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-27 09:09 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -66,7 +66,7 @@ Outstanding items only the owner can close.
 | O12 | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input button is), then pick that input from the SwitchBar menu and switch back from the other side or the buttons. Closes FR2 live and answers RR3. | P1 | held 2026-10-20 — owner: \"I don't have a second source attached\". Waits for the HP Omen or any HDMI device; RR3 stays unanswered until then |
 | O13 | Gate F2 (name your monitors, `docs/plans/F2.md`) and ratify D13, which also opens milestone v1.0 and adds FR10 to the spec (paste it in, or tell the agent to). | P1 | closed 2026-10-21 — "f2 and d13 are good to go"; FR10 pasted into the spec by the agent on that instruction |
 | O14 | In the Shortcuts app, click All Actions, then the Apps list: look for **MonitorMenu** (six actions) and **IntentProbe** (one action, "Probe Monitor"). Report which of the two you see. Both are installed, signed with your Developer ID and running. | P0 | closed 2026-10-22 — the owner opened a new shortcut and searched the action library: both apps list their actions. |
-| O15 | With each Smart HDR mode on in the Dell's OSD (Desktop, Movie HDR, Game HDR, DisplayHDR 400), run `monitorctl get 0xF0` and paste the four values. Only Desktop (`0x34`) is known; the lock table in `VCP.lockingPresets` needs the others. | P2 | open |
+| O15 | With each Smart HDR mode on in the Dell's OSD (Desktop, Movie HDR, Game HDR, DisplayHDR 400), run `monitorctl get 0xF0` and paste the four values. Only Desktop (`0x34`) is known; the lock table in `VCP.lockingPresets` needs the others. Then, with it still on, open the menu (sliders greyed, the line under them), run `monitorctl set brightness 50` (refused), and `open "monitormenu://brightness/50"` right after toggling Smart HDR in the OSD: say whether the app answered before its next refresh (review F3 #2). | P2 | open |
 | O16 | Notarization needs your Apple ID app-specific password or an App Store Connect API key stored in the keychain (`xcrun notarytool store-credentials`). Without it the app runs on this Mac but Gatekeeper refuses it on any other. Say if you want it; it is a v1.5 chore. | P2 | open |
 
 ## Agent items (A)
@@ -131,6 +131,7 @@ Named ways to break the code, each paired with the test that must catch it. A te
 | M7 | `Sources/MonitorCore/MonitorNames.swift` | Key names by CoreGraphics display id instead of serial | `MonitorNamesTests.testNamesAreKeyedBySerialNotDisplayID` | killed 2026-10-21: 3 failures / 1 test (`scripts/mutate.sh M7`) |
 | M8 | `Sources/MonitorCore/DDCProtocol.swift` | Retry after a transport timeout (stacks a second call on the abandoned one) | `DDCFrameTests.testTimeoutIsNotRetried` | killed 2026-10-23 |
 | M9 | `Sources/MonitorCore/Monitor.swift` | Write a continuous code without first learning its maximum | `WhitelistTests.testContinuousWriteReadsTheMaximumFirst` | killed 2026-10-23 |
-| M10 | `Sources/MonitorCore/Monitor.swift` | Treat `0xF0` = `0x34` as a lock for every vendor, not only the one in the table | `LockTests.testLockIsVendorKeyed` | proposed |
-| M11 | `Sources/MonitorCore/Monitor.swift` | Write brightness while the last lock read said locked | `LockTests.testLockedCodesAreNotWritten` | proposed |
+| M10 | `Sources/MonitorCore/Monitor.swift` | Treat `0xF0` = `0x34` as a lock for every vendor, not only the one in the table | `LockTests.testLockIsVendorKeyed` | run — killed 2026-10-27: 4 failures / 1 test (`scripts/mutate.sh M10`) |
+| M11 | `Sources/MonitorCore/Monitor.swift` | Write brightness while the last lock read said locked | `LockTests.testLockedCodesAreNotWritten` | run — killed 2026-10-27: 2 failures / 1 test (`scripts/mutate.sh M11`) |
 | M12 | `Sources/MonitorCore/CapabilitiesCache.swift` | Serve a cached capabilities string to a monitor with a different key | `CapabilitiesCacheTests.testCacheIsPerMonitor` | proposed |
+| M13 | `Sources/MonitorCore/Monitor.swift` | Guess "unlocked" instead of reading when the lock state is unknown (review F3 #1) | `LockTests.testFailedLockReadIsNotStale` | proposed |

@@ -1,11 +1,12 @@
-// Created: 2026-10-27 09:10 -05:00 · Edited: 2026-10-27 09:10 -05:00
+// Created: 2026-10-27 08:51 -05:00 · Edited: 2026-10-27 09:09 -05:00
 import XCTest
 @testable import MonitorCore
 
 /// D14: a vendor preset that makes the monitor ignore brightness and contrast is detected and the
 /// writes are refused with a message instead of sent. M10 (vendor key), M11 (write despite the lock).
 final class LockTests: XCTestCase {
-    /// The G3223D's preset reply with Smart HDR on (`0xF0` = 0x34) and off (0x0F), as the monitor frames them.
+    /// The G3223D's preset reply, as the monitor frames it: `0xF0` = 0x34 with Smart HDR on (`C3`). With it off the
+    /// live monitor has read 0x0F and, on 2026-10-27, 0x00; anything outside the vendor's locking set unlocks.
     static func presetReply(_ value: UInt8) -> [UInt8] { Fixtures.sealed([0x6E, 0x88, 0x02, 0x00, 0xF0, 0x00, 0x00, 0xFF, 0x00, value]) }
     /// Brightness 56/100: the range read a first brightness write makes (M9) consumes one of these.
     static let brightnessReply = Fixtures.sealed([0x6E, 0x88, 0x02, 0x00, 0x10, 0x00, 0x00, 0x64, 0x00, 0x38])
@@ -48,6 +49,34 @@ final class LockTests: XCTestCase {
         XCTAssertNil(try m.pictureLock())
         XCTAssertNoThrow(try m.setBrightness(50))
         XCTAssertEqual(ch.writes.last, DDCFrame.setVCP(0x10, 50))
+    }
+
+    /// Review F3 #1, M13: a failed preset read never keeps the old answer, and a write made while the state is
+    /// unknown reads first instead of guessing either way.
+    func testFailedLockReadIsNotStale() throws {
+        let ch = RecordingChannel(); ch.replies = [Self.presetReply(0x34)]
+        let (m, _) = Fixtures.monitor(caps: Fixtures.g3223d, channel: ch)
+        XCTAssertEqual(try m.pictureLock(), "Smart HDR")
+        XCTAssertThrowsError(try m.pictureLock(), "no reply scripted: the read fails")
+        XCTAssertNil(m.lockedBy, "a failed read is not the old answer")
+        XCTAssertEqual(m.lockState, .unknown)
+        ch.replies = [Self.presetReply(0x34)]
+        XCTAssertThrowsError(try m.setBrightness(50)) { XCTAssertEqual($0 as? DDCError, .locked(code: 0x10, by: "Smart HDR")) }
+        XCTAssertEqual(ch.writes.filter { $0 == DDCFrame.getVCP(0xF0) }.count, 3, "the write re-read the preset before deciding")
+        XCTAssertFalse(ch.writes.contains(DDCFrame.setVCP(0x10, 50)), "nothing was sent while locked")
+        ch.replies = [Self.presetReply(0x00), Self.brightnessReply]
+        XCTAssertNil(try m.pictureLock())
+        XCTAssertNoThrow(try m.setBrightness(50))
+        XCTAssertEqual(ch.writes.last, DDCFrame.setVCP(0x10, 50))
+    }
+
+    /// A monitor that was never read is unknown too: the first write reads the preset first.
+    func testUnknownStateReadsBeforeTheFirstWrite() throws {
+        let ch = RecordingChannel(); ch.replies = [Self.presetReply(0x34)]
+        let (m, _) = Fixtures.monitor(caps: Fixtures.g3223d, channel: ch)
+        XCTAssertEqual(m.lockState, .unknown)
+        XCTAssertThrowsError(try m.setBrightness(50)) { XCTAssertEqual($0 as? DDCError, .locked(code: 0x10, by: "Smart HDR")) }
+        XCTAssertEqual(ch.writes, [DDCFrame.getVCP(0xF0)])
     }
 
     /// M10, NFR8: the table is per vendor. Another maker's monitor advertising 0xF0 = 0x34 is not locked, and no I2C happens.

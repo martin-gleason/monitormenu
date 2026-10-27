@@ -1,4 +1,5 @@
 #!/bin/zsh
+# Created: 2026-10-19 19:22 -05:00 · Edited: 2026-10-27 09:09 -05:00
 # C1-T4: scripts/mutate.sh M<n> — apply the named break, run the catching test (expect red), restore.
 # Rows mirror the Mutations register; a test is not evidence until this shows it fail.
 set -uo pipefail
@@ -46,10 +47,14 @@ case "$id" in
       to='guard let p = VCP.lockingPreset(vendor: 0x10AC), capabilities?.advertises(p.code) == true else { return nil }'
       filter=LockTests/testLockIsVendorKeyed ;;
   M11) file=Sources/MonitorCore/Monitor.swift
-      from='if VCP.lockedCodes.contains(code), let by = lockedBy { throw DDCError.locked(code: code, by: by) }'
-      to='if VCP.lockedCodes.contains(code), let by = lockedBy { _ = by }'
+      from='if let by { throw DDCError.locked(code: code, by: by) }'
+      to='if let by { _ = by }'
       filter=LockTests/testLockedCodesAreNotWritten ;;
-  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4|M5|M6|M7|M8|M9|M10|M11"; exit 2 ;;
+  M13) file=Sources/MonitorCore/Monitor.swift
+      from='let by = lockState == .unknown ? try pictureLock() : lockedBy'
+      to='let by = lockState == .unknown ? nil : lockedBy'
+      filter=LockTests/testFailedLockReadIsNotStale ;;
+  *) echo "usage: scripts/mutate.sh M1|M2|M3|M4|M5|M6|M7|M8|M9|M10|M11|M13"; exit 2 ;;
 esac
 if ! git diff --quiet -- "$file"; then echo "$file has uncommitted changes; refusing to mutate"; exit 2; fi
 if ! grep -qF -- "$from" "$file"; then echo "$id: pattern not found in $file — the mutation no longer applies"; exit 2; fi

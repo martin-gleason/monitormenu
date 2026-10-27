@@ -1,3 +1,4 @@
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:09 -05:00
 import Foundation
 import CDDC
 
@@ -21,11 +22,14 @@ public enum DDCError: Error, Equatable, CustomStringConvertible {
     case ambiguousMonitor(String, [String])
     case locked(code: UInt8, by: String)
 
+    /// The one sentence every surface shows for D14 (review F3 #7): the menu capitalises it, the error prefixes the control.
+    public static func lockMessage(by: String) -> String { "locked by the monitor's \(by) — turn it off in the monitor's menu" }
+
     public var description: String {
         switch self {
         case .locked(let c, let by):
             let what = c == VCP.brightness ? "brightness" : c == VCP.contrast ? "contrast" : String(format: "VCP 0x%02X", c)
-            return "\(what) is locked by the monitor's \(by) — turn it off in the monitor's menu"
+            return "\(what) is \(Self.lockMessage(by: by))"
         case .ioFailed(let what, let rc): return "\(what) failed (IOReturn \(rc))"
         case .timeout(let what): return "\(what) timed out"
         case .badReply(let why): return "bad reply: \(why)"
