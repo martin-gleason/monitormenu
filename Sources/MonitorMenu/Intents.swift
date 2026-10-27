@@ -1,9 +1,10 @@
+// Created: 2026-10-19 19:52 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import AppIntents
 import AppKit
 import MonitorCore
 
-// FR7, FR9: App Intents make every action a Shortcuts action and, via AppShortcutsProvider,
-// a Siri phrase with no setup. All call Actions.shared, the same path as the menu (D9).
+// FR7, FR9: App Intents make every action a Shortcuts action, a Spotlight action and, via the
+// AppShortcutsProvider in Voice.swift, a Siri phrase. All call Actions.shared, the same path as the menu (D9).
 
 enum InputChoice: String, AppEnum {
     case displayPort1 = "dp1", displayPort2 = "dp2", hdmi1 = "hdmi1", hdmi2 = "hdmi2", usbC = "usbc"
@@ -88,27 +89,4 @@ struct OpenSwitcherIntent: AppIntent {
     }
 }
 
-/// FR9: these phrases work with Siri and appear in Spotlight and the Shortcuts app on first launch.
-struct MonitorMenuShortcuts: AppShortcutsProvider {
-    static var appShortcuts: [AppShortcut] {
-        AppShortcut(intent: SwitchInputIntent(),
-                    phrases: ["Switch my monitor to \(\.$input) with \(.applicationName)", "\(.applicationName) switch to \(\.$input)"],
-                    shortTitle: "Switch Input", systemImageName: "display")
-        AppShortcut(intent: OpenSwitcherIntent(),
-                    phrases: ["Open the \(.applicationName) switcher", "Switch monitor input with \(.applicationName)"],
-                    shortTitle: "Input Switcher", systemImageName: "rectangle.on.rectangle")
-        AppShortcut(intent: SleepMonitorIntent(),
-                    phrases: ["Put my monitor to sleep with \(.applicationName)"],
-                    shortTitle: "Sleep Monitor", systemImageName: "moon")
-        AppShortcut(intent: SetPiPIntent(),
-                    phrases: ["Set picture in picture to \(\.$mode) with \(.applicationName)"],
-                    shortTitle: "Picture-in-Picture", systemImageName: "pip")
-        // A number cannot ride in a phrase; Siri asks for it after the phrase (review O9, 2026-10-23).
-        AppShortcut(intent: SetBrightnessIntent(),
-                    phrases: ["Set my monitor brightness with \(.applicationName)", "\(.applicationName) brightness"],
-                    shortTitle: "Brightness", systemImageName: "sun.max")
-        AppShortcut(intent: SetContrastIntent(),
-                    phrases: ["Set my monitor contrast with \(.applicationName)", "\(.applicationName) contrast"],
-                    shortTitle: "Contrast", systemImageName: "circle.lefthalf.filled")
-    }
-}
+// The AppShortcutsProvider (the phrases) lives in Voice.swift, the v1.5 voice-activation seam (D15).
