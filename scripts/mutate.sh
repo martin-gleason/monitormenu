@@ -43,8 +43,8 @@ case "$id" in
       to='if max == nil { max = nil }'
       filter=WhitelistTests/testContinuousWriteReadsTheMaximumFirst ;;
   M10) file=Sources/MonitorCore/Monitor.swift
-      from='guard let p = VCP.lockingPreset(vendor: identity.vendor), capabilities?.advertises(p.code) == true else { return nil }'
-      to='guard let p = VCP.lockingPreset(vendor: 0x10AC), capabilities?.advertises(p.code) == true else { return nil }'
+      from='guard let p = VCP.lockingPreset(vendor: identity.vendor), capabilities?.advertises(p.code) == true else {'
+      to='guard let p = VCP.lockingPreset(vendor: 0x10AC), capabilities?.advertises(p.code) == true else {'
       filter=LockTests/testLockIsVendorKeyed ;;
   M11) file=Sources/MonitorCore/Monitor.swift
       from='if let by { throw DDCError.locked(code: code, by: by) }'

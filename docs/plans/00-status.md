@@ -46,7 +46,7 @@ Counted from the register itself. A register with no rows still gets a line.
 | Owner items (`O`) | 16 | 6 | 0 | 10 |
 | Agent items (`A`) | 4 | 0 | 0 | 4 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
-| Mutations (`M`) | 13 | 2 | 2 | 9 |
+| Mutations (`M`) | 13 | 1 | 3 | 9 |
 | Chores (`C`) | 4 | 0 | 1 | 3 |
 | Gates (`G`) | 6 | 0 | 3 | 3 |
 
@@ -69,8 +69,8 @@ Counted from the register itself. A register with no rows still gets a line.
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 9 |
-| `M` | proposed | 2 |
-| `M` | unknown | 2 |
+| `M` | proposed | 1 |
+| `M` | unknown | 3 |
 | `C` | done | 3 |
 | `C` | unknown | 1 |
 | `G` | done | 3 |
@@ -125,7 +125,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | unassigned | M10 | — | unknown | Treat 0xF0 = 0x34 as a lock for every vendor, not only the one in the table |
 | unassigned | M11 | — | unknown | Write brightness while the last lock read said locked |
 | unassigned | M12 | — | proposed | Serve a cached capabilities string to a monitor with a different key |
-| unassigned | M13 | — | proposed | Guess "unlocked" instead of reading when the lock state is unknown (review F3 #1) |
+| unassigned | M13 | — | unknown | Guess "unlocked" instead of reading when the lock state is unknown (review F3 #1) |
 
 ---
 
