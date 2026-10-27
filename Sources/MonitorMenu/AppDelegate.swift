@@ -37,7 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Actions.shared.openSwitcher = { [weak self] in self?.openSwitcher() }
         // FR9: the default hotkey is live on first launch (D9).
         hotKey = HotKey(spec: hotKeySpec) { [weak self] in self?.openSwitcher() }
-        if hotKey == nil { NSLog("MonitorMenu: hotkey \"%@\" could not be registered", hotKeySpec) }
+        if hotKey == nil { Log.app.error("hotkey \(self.hotKeySpec, privacy: .public) could not be registered (another instance may hold it)") }
         // Screen changes (a monitor retraining its link, plug and unplug) → look again.
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             self?.store.scheduleRediscover()
@@ -50,7 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             Task { @MainActor in
-                do { NSLog("MonitorMenu: %@", try await Actions.shared.handle(url: url)) }
+                do { let r = try await Actions.shared.handle(url: url); Log.app.notice("url \(url.host ?? "", privacy: .public): \(r)") }
                 catch { self.report(error.localizedDescription) }
             }
         }
@@ -245,7 +245,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// NFR4: a failed write is reported in the menu bar title for a moment, never as a modal.
     private func report(_ error: String?) {
         guard let error, let b = statusItem.button else { return }
-        NSLog("MonitorMenu: %@", error)
+        Log.app.error("action failed: \(error)")
         b.image = Self.alertIcon
         b.toolTip = error
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in

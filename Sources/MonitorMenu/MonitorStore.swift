@@ -52,7 +52,7 @@ final class MonitorStore {
         // can replace the display's IOAVService, so every "after" event triggers a (debounced) rediscovery.
         CGDisplayRegisterReconfigurationCallback({ _, flags, userInfo in
             guard !flags.contains(.beginConfigurationFlag), let info = userInfo else { return }
-            NSLog("MonitorMenu: display reconfigured (flags 0x%x)", flags.rawValue)
+            Log.app.notice("display reconfigured (flags \(String(flags.rawValue, radix: 16), privacy: .public))")
             Unmanaged<MonitorStore>.fromOpaque(info).takeUnretainedValue().scheduleRediscover()
         }, Unmanaged.passUnretained(self).toOpaque())
     }
@@ -62,7 +62,7 @@ final class MonitorStore {
 
     func scheduleRediscover() {
         guard !rediscoverPending else { return }
-        NSLog("MonitorMenu: screen change — rediscovery scheduled")
+        Log.app.notice("screen change — rediscovery scheduled")
         rediscoverPending = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.rediscoverPending = false
@@ -115,8 +115,9 @@ final class MonitorStore {
             self.readValues(into: &s)
             found.append(s)
         }
-        NSLog("MonitorMenu: discovery → %@ (%.0f ms, %@)", found.map { "\($0.name) [\($0.id)] display \($0.displayID.map(String.init) ?? "?")\($0.lastError.map { " (" + $0 + ")" } ?? "")" }.joined(separator: ", "),
-              Date().timeIntervalSince(started) * 1000, Self.sinceLaunch())
+        let detail = found.map { "\($0.name) [\($0.id)] display \($0.displayID.map(String.init) ?? "?")\($0.lastError.map { " (" + $0 + ")" } ?? "")" }.joined(separator: ", ")
+        let ms = Int(Date().timeIntervalSince(started) * 1000)
+        Log.app.notice("discovery → \(found.count, privacy: .public) monitor(s) in \(ms, privacy: .public) ms, \(Self.sinceLaunch(), privacy: .public): \(detail)")
         return found
     }
 
@@ -133,7 +134,7 @@ final class MonitorStore {
                 for i in updated.indices where id == nil || updated[i].id == id {
                     self.readValues(into: &updated[i])
                 }
-                NSLog("MonitorMenu: refresh %@ in %.0f ms", id ?? "all", Date().timeIntervalSince(started) * 1000)
+                Log.app.notice("refresh \(id == nil ? "all" : "one", privacy: .public) in \(Int(Date().timeIntervalSince(started) * 1000), privacy: .public) ms")
                 DispatchQueue.main.async {
                     // Merge by id, and only onto the same Monitor object: a discovery that landed meanwhile
                     // holds a fresh IOAVService, and the snapshot's stale one would fail with MACH_SEND_INVALID_DEST.
@@ -161,7 +162,7 @@ final class MonitorStore {
     private func readValues(into s: inout MonitorState) {
         let m = s.monitor
         s.lastError = nil
-        if m.capabilities == nil, (try? m.loadCapabilities()) != nil {
+        if m.capabilities == nil, (try? m.loadCapabilities(cache: capabilitiesCache)) != nil {
             s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes()
         }
         do {
@@ -187,7 +188,7 @@ final class MonitorStore {
                 guard let self else { return }
                 var err: String?
                 do { try action(monitor) } catch let first {
-                    NSLog("MonitorMenu: action on %@ failed: %@", id, "\(first)")
+                    Log.app.error("action on \(id) failed: \("\(first)", privacy: .public)")
                     err = "\(first)"
                     if Self.isTransportLoss(first) {
                         // The display retrained its link and its service is gone, or the transport hung (A2-1). The
@@ -198,7 +199,7 @@ final class MonitorStore {
                             let fresh = self.discoverSync()
                             if !fresh.isEmpty { DispatchQueue.main.async { self.states = fresh; self.onChange?() } }
                             guard let again = fresh.first(where: { $0.id == id })?.monitor else { continue }
-                            do { try action(again); err = nil; NSLog("MonitorMenu: retry %d on fresh service succeeded", round); break }
+                            do { try action(again); err = nil; Log.app.notice("retry \(round, privacy: .public) on fresh service succeeded"); break }
                             catch { err = "retry \(round): \(error)"; if Self.isTransportLoss(error) { continue } else { break } }
                         }
                     }
