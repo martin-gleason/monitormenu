@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:09 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import Foundation
 import MonitorCore
 
@@ -13,6 +13,10 @@ import MonitorCore
 //   monitorctl set pip <off|small|large|split|0xNN> [--display X]    monitorctl set pip-source <input> [--display X]
 //   monitorctl probe [--display X] [--count N]       RR2: read reliability over N reads
 //   monitorctl rename "<name>" [--display X]         FR10: name a monitor; --clear removes the name
+//
+// The capabilities string is read from the monitor once and remembered per serial in the defaults suite
+// the app shares (about 2.3 s saved per call). `capabilities` always reads it again; `--fresh` makes any
+// other verb do the same.
 //
 // `get <hex code>` reads any code for diagnosis. There is deliberately no raw `set <code> <value>`:
 // writes are limited to the spec's FR2–FR5 controls (review K2, 2026-10-19).
@@ -34,6 +38,7 @@ func fail(_ msg: String) -> Never { FileHandle.standardError.write(Data((msg + "
 
 let displaySel = takeOption("--display")
 let json = takeFlag("--json")
+let fresh = takeFlag("--fresh")
 let count = max(1, min(10_000, Int(takeOption("--count") ?? "") ?? 100))
 let verb = args.first ?? "list"
 
@@ -41,6 +46,7 @@ let monitors = MonitorDiscovery.discover()
 if monitors.isEmpty { fail("no external monitor with a DDC channel was found") }
 
 let names = MonitorNames()
+let cache = CapabilitiesCache()
 func shown(_ m: Monitor) -> String { let n = names.displayName(for: m.identity); return n == m.name ? m.name : "\(n) (\(m.name))" }
 func pick() -> Monitor {
     // FR10: the user's name wins, then the monitor's own name, serial or display id.
@@ -50,9 +56,9 @@ func pick() -> Monitor {
     fail(DDCError.noSuchMonitor(displaySel ?? "").description)
 }
 
-func load(_ m: Monitor) -> Capabilities {
+func load(_ m: Monitor, fresh: Bool = fresh) -> Capabilities {
     if let c = m.capabilities { return c }
-    do { return try m.loadCapabilities() } catch { fail("\(shown(m)): could not read capabilities: \(error)") }
+    do { return try m.loadCapabilities(cache: cache, fresh: fresh) } catch { fail("\(shown(m)): could not read capabilities: \(error)") }
 }
 
 func hex(_ v: UInt8) -> String { String(format: "0x%02X", v) }
@@ -82,7 +88,7 @@ case "list":
     if json, let d = try? JSONSerialization.data(withJSONObject: rows, options: [.prettyPrinted, .sortedKeys]) { print(String(decoding: d, as: UTF8.self)) }
 
 case "capabilities":
-    let m = pick(); print(load(m).raw)
+    let m = pick(); print(load(m, fresh: true).raw)   // the diagnostic verb: always the monitor's current string
 
 case "get":
     let m = pick(); _ = load(m)
@@ -145,5 +151,5 @@ case "probe":
     print("\(shown(m)): \(ok)/\(count) reads succeeded, \(fails) failed, mean \(String(format: "%.0f", avg)) ms per read (\(m.link.timing.attempts) attempts max each)")
 
 default:
-    fail("usage: monitorctl list|capabilities|get|set|rename|probe  (see source header)")
+    fail("usage: monitorctl list|capabilities|get|set|rename|probe [--display X] [--fresh] [--json]  (see source header)")
 }

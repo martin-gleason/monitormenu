@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:09 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import Foundation
 import CoreGraphics
 
@@ -37,11 +37,17 @@ public final class Monitor {
 
     public var name: String { identity.name }
 
-    /// Reads the capabilities string from the monitor. Required before any write (D3).
+    /// The capabilities string, required before any write (D3): from `cache` when it remembers this monitor
+    /// and `fresh` is false, else from the monitor (14 round trips), then stored for the next process (C4-T1).
     @discardableResult
-    public func loadCapabilities() throws -> Capabilities {
-        let caps = Capabilities.parse(try link.capabilitiesString())
+    public func loadCapabilities(cache: CapabilitiesCache? = nil, fresh: Bool = false) throws -> Capabilities {
+        if !fresh, let raw = cache?.raw(for: identity) {
+            let caps = Capabilities.parse(raw); capabilities = caps; return caps
+        }
+        let raw = try link.capabilitiesString()
+        let caps = Capabilities.parse(raw)
         capabilities = caps
+        cache?.store(raw, for: identity)
         return caps
     }
 
