@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-22 15:00 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-27 09:00 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -27,8 +27,9 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | D11 | proposed | MVP | `switchctl` has no raw `set <code> <value>`; writes are limited to the spec's controls (input, brightness, contrast, power, PiP mode and source). Raw `get 0xNN` stays for diagnosis. Source: review K2. The volume round-trip used as write-path evidence on 2026-10-19 was made with the command before it was removed. |
 | D12 | ratified | MVP | **Supersedes D5.** The owner named it **MonitorMenu** on 2026-10-19: "Name is MonitorMenu". Bundle id `dev.marty.MonitorMenu`, URL scheme `monitormenu://`, library `MonitorCore`, command line `monitorctl`, repo `martin-gleason/monitormenu`. Register rows, the review log and the learnings keep the old name as the historical record. |
 | D13 | ratified | v1.0 | **Milestone v1.0 follows MVP** and opens with F2, naming monitors (owner, 2026-10-20: "monitormenu should allow for renaming of devices -- can we add that to v1.0"). Adds FR10 (`docs/plans/F2.md`). Names live in `UserDefaults` keyed by the monitor's serial and are used everywhere the monitor is named. |
-| D14 | proposed | v1.0 | **Show a monitor-side lock instead of dead sliders.** When a monitor reports a preset that locks brightness and contrast (the G3223D: `0xF0` = 0x34, Smart HDR on), the menu greys out the two sliders with the note "locked by the monitor's Smart HDR" and `monitorctl` prints the same instead of a silent write. Vendor-keyed like PiP (NFR8): Dell only until another monitor shows the behaviour. Proposed by the agent from `C3`; needs the owner's yes. |
+| D14 | ratified | v1.0 | **Show a monitor-side lock instead of dead sliders.** When a monitor reports a preset that locks brightness and contrast (the G3223D: `0xF0` = 0x34, Smart HDR on), the menu greys out the two sliders with the note "locked by the monitor's Smart HDR" and `monitorctl` prints the same instead of a silent write. Vendor-keyed like PiP (NFR8): Dell only until another monitor shows the behaviour. Proposed by the agent from `C3`. **Ratified 2026-10-27** — owner: "d14 is ratified". Built as `F3`. |
 | D15 | ratified | v1.5 | **Voice activation moves to v1.5.** Owner, 2026-10-25: "we can make voice activation v1.5." FR9's Siri clause is not met in v1.0: the macOS 27 Siri (beta) executes third-party actions only through App Schema domains and none exists for displays; the app's phrase-based App Shortcuts, a named shortcut wrapping its action, and a shortcut wrapping its URL scheme all fail or run once (`A4`, `docs/learnings/2026-10-23-siri-app-intents.md`). v1.0 delivers FR9 through the Shortcuts app, Spotlight, the hotkey and the URL scheme. v1.5 candidates: Siri Classic, shipped URL-scheme shortcut files, a schema domain if Apple adds one. |
+| D16 | ratified | v1.5 | **v1.0 ships with `F3` and `C4`; milestone v1.5 opens.** Owner, 2026-10-27: "Then create v1.5". v1.5 holds voice activation (`D15`) and whatever the `C4` review proposes for it; nothing else enters without its own `D<n>`. The GitHub milestones `v1.0` (closed) and `v1.5` (open) are the visible record. |
 
 ## Risks (RR)
 
@@ -65,6 +66,8 @@ Outstanding items only the owner can close.
 | O12 | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input button is), then pick that input from the SwitchBar menu and switch back from the other side or the buttons. Closes FR2 live and answers RR3. | P1 | held 2026-10-20 — owner: \"I don't have a second source attached\". Waits for the HP Omen or any HDMI device; RR3 stays unanswered until then |
 | O13 | Gate F2 (name your monitors, `docs/plans/F2.md`) and ratify D13, which also opens milestone v1.0 and adds FR10 to the spec (paste it in, or tell the agent to). | P1 | closed 2026-10-21 — "f2 and d13 are good to go"; FR10 pasted into the spec by the agent on that instruction |
 | O14 | In the Shortcuts app, click All Actions, then the Apps list: look for **MonitorMenu** (six actions) and **IntentProbe** (one action, "Probe Monitor"). Report which of the two you see. Both are installed, signed with your Developer ID and running. | P0 | closed 2026-10-22 — the owner opened a new shortcut and searched the action library: both apps list their actions. |
+| O15 | With each Smart HDR mode on in the Dell's OSD (Desktop, Movie HDR, Game HDR, DisplayHDR 400), run `monitorctl get 0xF0` and paste the four values. Only Desktop (`0x34`) is known; the lock table in `VCP.lockingPresets` needs the others. | P2 | open |
+| O16 | Notarization needs your Apple ID app-specific password or an App Store Connect API key stored in the keychain (`xcrun notarytool store-credentials`). Without it the app runs on this Mac but Gatekeeper refuses it on any other. Say if you want it; it is a v1.5 chore. | P2 | open |
 
 ## Agent items (A)
 
@@ -84,6 +87,7 @@ Outstanding items only the agent can close: defects in its own work, findings it
 | C1 | Build the harness: run, count, floor, mutate, pre-commit; CI once pushed. | P0 | done 2026-10-19 — CI run 39354005338 green on main; ruleset Rebase-n-Merge active (PR + `test` check + rebase only) | agent | `docs/plans/C1.md` |
 | C2 | Rename SwitchBar → MonitorMenu (D12): directories, identifiers, bundle id, URL scheme, CLI, docs; historical rows untouched. | P1 | done 2026-10-19 | agent | — |
 | C3 | Find what puts the G3223D into its locked state (RR6) and what clears it. **Found 2026-10-23:** the monitor's own Smart HDR setting. With Smart HDR on (Desktop, Movie HDR, Game HDR, DisplayHDR 400) the G3223D greys out Brightness and Contrast in its OSD, reports preset `0xF0` = 0x34 over DDC, accepts brightness writes and ignores them, and advertises HDR to macOS (AppKit potential EDR headroom 4.18). The owner set Smart HDR to Off in the OSD: the lock cleared at once, brightness 56 and contrast 75 write and read back, and macOS now sees headroom 1.0. The monitor turns Smart HDR on by itself when the source sends HDR; both episodes followed link retrains (BetterDisplay mode changes on 10-19, a PiP cycle and an unexplained display-stack restart on 10-23). Left over: the input code still answers `1B 1B 1B 1B` (USB-C) while the Mac is on HDMI 1; watch whether a sleep/wake clears it. Code follow-up proposed as `D14`. | P1 | done 2026-10-23 |
+| C4 | Polish pass: capabilities cache (CLI 2.8 s → under 0.5 s), memory and startup measured and trimmed, file stamps and stale docs, the voice seam, Apple-guidelines check. Closes v1.0. | P1 | building 2026-10-27 | agent | `docs/plans/C4.md` |
 
 ## Gates (G)
 
@@ -94,6 +98,9 @@ A gate is an **event**, not a place. It is recorded here so it exists outside th
 | G1 | C1 harness | done (crossed; closed 2026-10-19 with CI) | 2026-10-19 | 2026-10-19 | "Go ahead with a monitor neutral native swift app" |
 | G2 | F1 inputs, picture functions and PiP from the menu bar | done (crossed) | 2026-10-19 | 2026-10-19 | "Go ahead with a monitor neutral native swift app" |
 | G3 | F2 name your monitors | done (crossed) | 2026-10-20 | 2026-10-21 | "f2 and d13 are good to go. begin f2 and a3" |
+| G4 | F3 locked by the monitor | crossed | 2026-10-27 | 2026-10-27 | "d14 is ratified" |
+| G5 | C4 polish pass | crossed | 2026-10-27 | 2026-10-27 | "run a polish pass to optimize for memory useage, code documentation, and speed of app. keep a framework for voice activation when the new siri allows it" |
+| G6 | milestone boundary v1.0 → v1.5 | crossed | — | 2026-10-27 | "Then create v1.5" |
 
 ## Hooks (H)
 
@@ -124,3 +131,6 @@ Named ways to break the code, each paired with the test that must catch it. A te
 | M7 | `Sources/MonitorCore/MonitorNames.swift` | Key names by CoreGraphics display id instead of serial | `MonitorNamesTests.testNamesAreKeyedBySerialNotDisplayID` | killed 2026-10-21: 3 failures / 1 test (`scripts/mutate.sh M7`) |
 | M8 | `Sources/MonitorCore/DDCProtocol.swift` | Retry after a transport timeout (stacks a second call on the abandoned one) | `DDCFrameTests.testTimeoutIsNotRetried` | killed 2026-10-23 |
 | M9 | `Sources/MonitorCore/Monitor.swift` | Write a continuous code without first learning its maximum | `WhitelistTests.testContinuousWriteReadsTheMaximumFirst` | killed 2026-10-23 |
+| M10 | `Sources/MonitorCore/Monitor.swift` | Treat `0xF0` = `0x34` as a lock for every vendor, not only the one in the table | `LockTests.testLockIsVendorKeyed` | proposed |
+| M11 | `Sources/MonitorCore/Monitor.swift` | Write brightness while the last lock read said locked | `LockTests.testLockedCodesAreNotWritten` | proposed |
+| M12 | `Sources/MonitorCore/CapabilitiesCache.swift` | Serve a cached capabilities string to a monitor with a different key | `CapabilitiesCacheTests.testCacheIsPerMonitor` | proposed |

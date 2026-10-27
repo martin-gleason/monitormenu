@@ -82,18 +82,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func updateInPlace() {
         for s in store.states {
-            sliders["\(s.id):brightness"]?.set(current: s.brightness?.current ?? 0, max: s.brightness?.max ?? 100, enabled: s.brightness != nil)
-            sliders["\(s.id):contrast"]?.set(current: s.contrast?.current ?? 0, max: s.contrast?.max ?? 100, enabled: s.contrast != nil)
+            let locked = s.lockedBy != nil
+            sliders["\(s.id):brightness"]?.set(current: s.brightness?.current ?? 0, max: s.brightness?.max ?? 100, enabled: s.brightness != nil, locked: locked)
+            sliders["\(s.id):contrast"]?.set(current: s.contrast?.current ?? 0, max: s.contrast?.max ?? 100, enabled: s.contrast != nil, locked: locked)
+            if let note = lockNotes[s.id] { note.title = Self.lockTitle(s.lockedBy); note.isHidden = !locked }
             for code in s.inputs { checkItems["\(s.id):input:\(code)"]?.state = s.currentInput == code ? .on : .off }
             for mode in s.pipModes { checkItems["\(s.id):pip:\(mode)"]?.state = s.pipMode == mode ? .on : .off }
         }
     }
+
+    private var lockNotes: [String: NSMenuItem] = [:]   // "\(id)" → the D14 line under the sliders
+    private static func lockTitle(_ by: String?) -> String { "Locked by the monitor's \(by ?? "preset") — turn it off in the monitor's menu" }
 
     private func rebuildNow() {
         lastNames = store.names.all
         menu.removeAllItems()
         sliders.removeAll()
         checkItems.removeAll()
+        lockNotes.removeAll()
         if store.states.isEmpty {
             let i = NSMenuItem(title: "No DDC-capable monitor found", action: nil, keyEquivalent: ""); i.isEnabled = false
             menu.addItem(i)
@@ -126,6 +132,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     self?.store.perform(on: s.id, { try $0.setContrast(v) }, completion: self?.report)
                 }
                 menu.addItem(c)
+            }
+            if VCP.lockingPreset(vendor: s.identity.vendor) != nil {   // D14: a greyed line while the monitor's preset locks the sliders
+                let note = NSMenuItem(title: Self.lockTitle(s.lockedBy), action: nil, keyEquivalent: "")
+                note.isEnabled = false; note.indentationLevel = 1; note.isHidden = s.lockedBy == nil
+                lockNotes[s.id] = note
+                menu.addItem(note)
             }
 
             if s.monitor.hasPiP {   // FR4
@@ -180,7 +192,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func slider(for s: MonitorState, key: String, title: String, value: (current: UInt16, max: UInt16)?, onChange: @escaping (UInt16) -> Void) -> SliderMenuItem {
         let item = SliderMenuItem(title: title)
-        item.set(current: value?.current ?? 0, max: value?.max ?? 100, enabled: value != nil)
+        item.set(current: value?.current ?? 0, max: value?.max ?? 100, enabled: value != nil, locked: s.lockedBy != nil)
         item.onChange = onChange
         sliders["\(s.id):\(key)"] = item
         return item

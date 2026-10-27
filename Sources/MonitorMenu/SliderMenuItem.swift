@@ -25,11 +25,12 @@ final class SliderMenuItem: NSMenuItem {
     }
     required init(coder: NSCoder) { fatalError() }
 
-    func set(current: UInt16, max: UInt16, enabled: Bool) {
+    /// `locked`: the monitor is ignoring this control (D14); the slider is disabled and the value column says so.
+    func set(current: UInt16, max: UInt16, enabled: Bool, locked: Bool = false) {
         slider.maxValue = Double(Swift.max(1, max))
         slider.doubleValue = Double(current)
-        slider.isEnabled = enabled
-        value.stringValue = enabled ? "\(current)" : "—"
+        slider.isEnabled = enabled && !locked
+        value.stringValue = locked ? "locked" : enabled ? "\(current)" : "—"
     }
 
     @objc private func moved(_ sender: NSSlider) {

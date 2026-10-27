@@ -18,8 +18,8 @@ Named, never numbered (`D2`). **No source read here marks a milestone as the cur
 | Milestone | Decisions landing here | Units |
 |---|---|---|
 | MVP | 12 | C1, F1 |
-| v1.0 | 2 | F1b, F1c, F2 |
-| v1.5 | 1 | — |
+| v1.0 | 2 | C4, F1b, F1c, F2, F3 |
+| v1.5 | 2 | — |
 
 ## Features and chores
 
@@ -28,10 +28,12 @@ Status is what the unit's own plan header declares. What has landed in git is de
 | ID | Kind | Status | Milestone | P | Owner | Plan | Tasks |
 |---|---|---|---|---|---|---|---|
 | C1 | chore | done 2026-10-19 | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
+| C4 | chore | gate crossed 2026-10-27 ("run a polish pass to optimize for memory useage, code documentation, and speed of app | v1.0 | — | agent | `docs/plans/C4.md` | 6 planned |
 | F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass done 2026-10-23, fixed in `F1b` (`docs/plans/F1b.md`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
 | F1b | feature | built 2026-10-23; no gate (defect fixes from the second adversarial pass, `A2`, plus `A1`, whose decision criterion in the register was met by measurement) | v1.0 | — | agent | `docs/plans/F1b.md` | 5 planned |
 | F1c | feature | built 2026-10-23; no gate (FR9 defect `A4`, found by the owner's `O9` check) | v1.0 | — | agent | `docs/plans/F1c.md` | 1 planned |
 | F2 | feature | built 2026-10-21 (gate crossed 2026-10-21); adversarially reviewed 2026-10-22, one major and nine minors, all fixed but one accepted (`docs/reviews/F2.md`) | v1.0 | — | agent | `docs/plans/F2.md` | 3 planned |
+| F3 | feature | gate crossed 2026-10-27 ("d14 is ratified"); building | v1.0 | — | agent | `docs/plans/F3.md` | 2 planned |
 
 ## Registers
 
@@ -39,33 +41,39 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
-| Decisions (`D`) | 15 | 10 | 0 | 5 |
+| Decisions (`D`) | 16 | 9 | 0 | 7 |
 | Risks (`RR`) | 9 | 6 | 0 | 3 |
-| Owner items (`O`) | 14 | 4 | 0 | 10 |
+| Owner items (`O`) | 16 | 6 | 0 | 10 |
 | Agent items (`A`) | 4 | 0 | 0 | 4 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
-| Mutations (`M`) | 9 | 0 | 0 | 9 |
-| Chores (`C`) | 3 | 0 | 0 | 3 |
-| Gates (`G`) | 3 | 0 | 0 | 3 |
+| Mutations (`M`) | 12 | 3 | 0 | 9 |
+| Chores (`C`) | 4 | 0 | 1 | 3 |
+| Gates (`G`) | 6 | 0 | 3 | 3 |
+
+`Unknown` is not a third kind of open. It means the source document said nothing about status, so the page will not guess — the row is a question for the owner (`RR37`).
+
 
 ### By status
 
 | Register | Status | Count |
 |---|---|---|
-| `D` | proposed | 10 |
-| `D` | ratified | 4 |
+| `D` | proposed | 9 |
+| `D` | ratified | 6 |
 | `D` | superseded | 1 |
 | `RR` | open | 6 |
 | `RR` | resolved | 3 |
 | `O` | closed | 10 |
 | `O` | held | 1 |
-| `O` | open | 3 |
+| `O` | open | 5 |
 | `A` | closed | 4 |
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 9 |
+| `M` | proposed | 3 |
 | `C` | done | 3 |
+| `C` | unknown | 1 |
 | `G` | done | 3 |
+| `G` | unknown | 3 |
 
 ## Hooks
 
@@ -87,6 +95,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 
 | Owner | ID | P | Status | Item |
 |---|---|---|---|---|
+| agent | C4 | P1 | unknown | Polish pass: capabilities cache (CLI 2.8 s → under 0.5 s), memory and startup measured and trimmed, file stamps and stal… |
 | agent | RR1 | — | open | IOAVService is undocumented. A macOS update can change or remove it, and an app using it is not App Store eligible. |
 | agent | RR4 | — | open | A wrong VCP write can put a monitor into an odd state (factory reset, locked OSD). |
 | agent | RR8 | — | open | switchctl and the app share one I2C bus. Both transacting at the same instant corrupts one side's read (observed: switch… |
@@ -102,13 +111,20 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D9 | — | proposed | Built as written; the fallback was not needed — appintentsmetadataprocessor runs from scripts/build-app.sh on the .swift… |
 | owner | D10 | — | proposed | Monitor neutral (NFR8). The HP Omen the owner expects within 90 days of 2026-10-19 is the second test monitor; until it … |
 | owner | D11 | — | proposed | switchctl has no raw set <code> <value>; writes are limited to the spec's controls (input, brightness, contrast, power, … |
-| owner | D14 | — | proposed | Show a monitor-side lock instead of dead sliders. When a monitor reports a preset that locks brightness and contrast (th… |
 | owner | O5 | P1 | open | Sit at the G3223D for ten minutes while the agent steps through the 0xE9 values and say what each one shows. Closes RR5.… |
 | owner | O6 | P2 | open | Ratify D1–D6. |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
+| owner | O15 | P2 | open | With each Smart HDR mode on in the Dell's OSD (Desktop, Movie HDR, Game HDR, DisplayHDR 400), run monitorctl get 0xF0 an… |
+| owner | O16 | P2 | open | Notarization needs your Apple ID app-specific password or an App Store Connect API key stored in the keychain (xcrun not… |
+| unassigned | G4 | — | unknown | F3 locked by the monitor |
+| unassigned | G5 | — | unknown | C4 polish pass |
+| unassigned | G6 | — | unknown | milestone boundary v1.0 → v1.5 |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
+| unassigned | M10 | — | proposed | Treat 0xF0 = 0x34 as a lock for every vendor, not only the one in the table |
+| unassigned | M11 | — | proposed | Write brightness while the last lock read said locked |
+| unassigned | M12 | — | proposed | Serve a cached capabilities string to a monitor with a different key |
 
 ---
 
-21 open register rows.
+29 open register rows.
