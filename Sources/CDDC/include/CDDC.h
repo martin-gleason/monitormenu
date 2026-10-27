@@ -1,3 +1,4 @@
+// Created: 2026-10-19 19:22 -05:00 · Edited: 2026-10-27 10:05 -05:00
 // IOAVService: the I2C bridge to an external display's DDC/CI channel on Apple silicon.
 // These symbols are exported by IOKit.framework but absent from its headers. m1ddc,
 // MonitorControl and Didact declare them the same way (register D1, learnings 2026-10-19).

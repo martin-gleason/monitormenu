@@ -1,6 +1,6 @@
 # CLAUDE.md — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-19 17:34 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-27 09:30 -05:00
 
 Control your monitor from your desktop, menubar, or shortcut.
 
@@ -26,7 +26,7 @@ Where the spec and the register conflict, **the register wins**.
 
 ## Non-negotiable
 
-- **Scope is `SPEC.md` FR1–FR9 and nothing else.** Presets, schedules, Intel Macs, the built-in display, and anything App Store are future milestones. Do not build or stub them; open a `D<n>` and stop.
+- **Scope is `SPEC.md` FR1–FR10 plus the ratified deltas in the register, and nothing else.** Presets, schedules, Intel Macs, the built-in display, voice activation (`D15`, v1.5) and anything App Store are future milestones. Do not build or stub them; open a `D<n>` and stop.
 - **The app only sends what the monitor advertises.** A VCP code or value absent from the monitor's capabilities string is never written (NFR5). Factory-reset codes (0x04, 0x05, 0x08) are never exposed even when advertised.
 - **`MonitorCore` never imports AppKit.** The DDC transport, the capabilities parser and the VCP model stay testable without a UI.
 - **No third-party dependencies** without a ratified `D<n>`. No helper apps: MonitorMenu does not drive BetterDisplay, MonitorControl, or any other tool.
@@ -44,7 +44,7 @@ Where the spec and the register conflict, **the register wins**.
 
 ---
 
-## Learning level: 5% (proposed, not yet locked — `O2`)
+## Learning level: 5% (locked 2026-10-20, `O2`)
 
 The agent authors everything; Marty reviews every PR and does not write Swift. **Every PR description is written for a reviewer who can read code but not Swift**: what changed, why, what to test, what could break. The dial is the `owner` field on every task.
 
@@ -66,16 +66,20 @@ The agent authors everything; Marty reviews every PR and does not write Swift. *
 
 | Hook | Surface | Status |
 |---|---|---|
-| `swift test` | CI | not wired (C1) |
-| Capabilities whitelist cannot be bypassed | `swift test` (M1) | not wired (F1) |
-| No register ID in a commit, branch, or PR title | commit-msg | not wired (C1) |
-| Secret scan | pre-commit + CI | not wired (C1) |
+| `swift test` and the assertion floor | pre-commit + CI | built (C1) |
+| Capabilities whitelist cannot be bypassed | `swift test` (M1, M4) | built (F1) |
+| No register ID in a commit message | commit-msg | built (C1) |
+| Secret scan | pre-commit + CI | built (C1) |
+| Status page regenerates clean | pre-commit | built (C1) |
+| Rebase-and-merge only, `test` check required | GitHub ruleset | built (C1) |
+
+Mutations M1–M13 each have a test that was seen red (`scripts/mutate.sh M<n>`); the register's Mutations table is the record.
 
 ---
 
 ## Stack
 
-Swift 5.9 language mode on the installed Swift 6 toolchain · SwiftPM · AppKit · IOKit (`IOAVService` I2C for DDC/CI) · macOS 14+ · Apple silicon only for MVP · no lint yet. App bundle via `scripts/build-app.sh` (lands in F1).
+Swift 5.9 language mode on the installed Swift 6 toolchain · SwiftPM · AppKit · IOKit (`IOAVService` I2C for DDC/CI) · macOS 14+ · Apple silicon only · no lint. App bundle via `scripts/build-app.sh --install` (Developer ID signature, hardened runtime, App Intents metadata). Every source file carries a `Created/Edited` stamp (`python3 ~/Local_Dev_Projects/turing-review/scripts/stamp.py <file>`).
 
 -----
 2026-10-19

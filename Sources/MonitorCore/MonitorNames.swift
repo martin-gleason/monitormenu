@@ -1,3 +1,4 @@
+// Created: 2026-10-21 10:05 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import Foundation
 
 /// FR10: names the user gives monitors. Keyed by the monitor's serial (`MonitorIdentity.key`), never
