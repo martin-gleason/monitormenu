@@ -63,16 +63,17 @@ case "list":
         let caps = load(m)
         let input = try? m.currentInput()
         let b = try? m.brightness(), c = try? m.contrast()
+        let lockedBy = (try? m.pictureLock()) ?? nil   // D14
         let inputs = m.inputs().map { ["code": hex($0), "name": VCP.label(code: VCP.inputSource, value: $0), "active": input == $0] }
         if json {
             rows.append(["name": names.displayName(for: m.identity), "modelName": m.name, "displayID": m.identity.displayID ?? 0, "serial": m.identity.alphanumericSerial ?? "",
                          "model": caps.model ?? "", "inputs": inputs,
-                         "input": input.map(hex) ?? "", "brightness": b?.current ?? -1, "contrast": c?.current ?? -1,
+                         "input": input.map(hex) ?? "", "brightness": b?.current ?? -1, "contrast": c?.current ?? -1, "lockedBy": lockedBy ?? "",
                          "pip": m.hasPiP, "pipModes": m.pipModes().map { ["code": hex($0), "name": VCP.label(code: VCP.pipMode, value: $0)] }])
         } else {
             print("\(shown(m))  [display \(m.identity.displayID ?? 0), serial \(m.identity.alphanumericSerial ?? "?"), model \(caps.model ?? "?")]")
             print("  inputs:     " + m.inputs().map { ($0 == input ? "● " : "○ ") + VCP.label(code: VCP.inputSource, value: $0) + " (\(hex($0)))" }.joined(separator: "  "))
-            print("  brightness: \(b.map { "\($0.current)/\($0.max)" } ?? "?")   contrast: \(c.map { "\($0.current)/\($0.max)" } ?? "?")")
+            print("  brightness: \(b.map { "\($0.current)/\($0.max)" } ?? "?")   contrast: \(c.map { "\($0.current)/\($0.max)" } ?? "?")" + (lockedBy.map { "   locked by \($0)" } ?? ""))
             if m.hasPiP { print("  pip modes:  " + m.pipModes().map { VCP.label(code: VCP.pipMode, value: $0) + " (\(hex($0)))" }.joined(separator: "  ")) }
             print("  power:      " + m.powerModes().map { VCP.label(code: VCP.powerMode, value: $0) + " (\(hex($0)))" }.joined(separator: "  "))
         }
@@ -106,8 +107,9 @@ case "set":
         case "input":
             guard let code = VCP.inputCode(from: args[2]) else { fail("unknown input \(args[2])") }
             try m.setInput(code); print("\(shown(m)): input → \(VCP.label(code: VCP.inputSource, value: code))")
-        case "brightness": guard let v = UInt16(args[2]), v <= 100 else { fail("number 0–100") }; try m.setBrightness(v); print("\(shown(m)): brightness → \(v)")
-        case "contrast": guard let v = UInt16(args[2]), v <= 100 else { fail("number 0–100") }; try m.setContrast(v); print("\(shown(m)): contrast → \(v)")
+        // D14: read the lock first so a locked monitor gets the message, never a silent write.
+        case "brightness": guard let v = UInt16(args[2]), v <= 100 else { fail("number 0–100") }; try m.pictureLock(); try m.setBrightness(v); print("\(shown(m)): brightness → \(v)")
+        case "contrast": guard let v = UInt16(args[2]), v <= 100 else { fail("number 0–100") }; try m.pictureLock(); try m.setContrast(v); print("\(shown(m)): contrast → \(v)")
         case "power":
             let v: UInt8 = args[2] == "standby" ? 0x04 : args[2] == "on" ? 0x01 : args[2] == "off" ? 0x05 : UInt8(args[2].replacingOccurrences(of: "0x", with: ""), radix: 16) ?? 0
             try m.setPower(v); print("\(shown(m)): power → \(VCP.label(code: VCP.powerMode, value: v))")

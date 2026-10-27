@@ -12,6 +12,8 @@ struct MonitorState {
     var pipModes: [UInt8] = []
     var pipMode: UInt8?
     var powerModes: [UInt8] = []
+    /// D14: the preset label while the monitor ignores brightness and contrast (the Dell's Smart HDR), else nil.
+    var lockedBy: String?
     var lastError: String?
     /// The monitor's own name (EDID). The user's name, if any, is `MonitorStore.names`.
     var name: String { monitor.name }
@@ -167,6 +169,7 @@ final class MonitorStore {
             s.brightness = try m.brightness()
             s.contrast = try m.contrast()
             if m.hasPiP { s.pipMode = try m.currentPiPMode() }
+            s.lockedBy = try m.pictureLock()   // D14: one read, only on a vendor with a locking preset
         } catch { s.lastError = "\(error)" }
     }
 
