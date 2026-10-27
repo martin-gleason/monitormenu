@@ -1,3 +1,4 @@
+// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-27 09:09 -05:00
 import AppKit
 import MonitorCore
 
@@ -92,7 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private var lockNotes: [String: NSMenuItem] = [:]   // "\(id)" → the D14 line under the sliders
-    private static func lockTitle(_ by: String?) -> String { "Locked by the monitor's \(by ?? "preset") — turn it off in the monitor's menu" }
+    private static func lockTitle(_ by: String?) -> String { let m = DDCError.lockMessage(by: by ?? "preset"); return m.prefix(1).uppercased() + m.dropFirst() }
 
     private func rebuildNow() {
         lastNames = store.names.all

@@ -1,3 +1,4 @@
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:11 -05:00
 import XCTest
 @testable import MonitorCore
 
@@ -18,14 +19,15 @@ final class WhitelistTests: XCTestCase {
     }
 
     func testAdvertisedWritesGoThrough() throws {
-        let ch = RecordingChannel(); ch.replies = [Fixtures.sealed([0x6E, 0x88, 0x02, 0x00, 0x10, 0x00, 0x00, 0x64, 0x00, 0x38])]   // brightness 56/100
+        let ch = RecordingChannel(); ch.replies = [LockTests.presetReply(0x00),                                                      // D14: the Dell's preset, unlocked
+                                                   Fixtures.sealed([0x6E, 0x88, 0x02, 0x00, 0x10, 0x00, 0x00, 0x64, 0x00, 0x38])]   // brightness 56/100
         let (m, _) = Fixtures.monitor(caps: Fixtures.g3223d, channel: ch)
         try m.setInput(0x11)
         try m.setBrightness(56)
         try m.setPiPMode(0x24)
         try m.setPower(0x04)
-        XCTAssertEqual(ch.writes, [DDCFrame.setVCP(0x60, 0x11), DDCFrame.getVCP(0x10), DDCFrame.setVCP(0x10, 56), DDCFrame.setVCP(0xE9, 0x24), DDCFrame.setVCP(0xD6, 0x04)],
-                       "the first brightness write is preceded by one read of its range; discrete codes need none")
+        XCTAssertEqual(ch.writes, [DDCFrame.setVCP(0x60, 0x11), DDCFrame.getVCP(0xF0), DDCFrame.getVCP(0x10), DDCFrame.setVCP(0x10, 56), DDCFrame.setVCP(0xE9, 0x24), DDCFrame.setVCP(0xD6, 0x04)],
+                       "the first brightness write on a Dell is preceded by one read of the lock preset (D14) and one of its range; discrete codes need neither")
     }
 
     /// M9 (review A2-3): a continuous code is never written before its maximum is known, on any surface.

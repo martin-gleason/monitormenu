@@ -1,3 +1,4 @@
+// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-27 09:09 -05:00
 import Foundation
 import CoreGraphics
 import MonitorCore
@@ -169,8 +170,10 @@ final class MonitorStore {
             s.brightness = try m.brightness()
             s.contrast = try m.contrast()
             if m.hasPiP { s.pipMode = try m.currentPiPMode() }
-            s.lockedBy = try m.pictureLock()   // D14: one read, only on a vendor with a locking preset
         } catch { s.lastError = "\(error)" }
+        // D14: one read, only on a vendor with a locking preset. A failed read shows live sliders, and the
+        // monitor's state is then "unknown", so the next write reads again before deciding (review F3 #1).
+        s.lockedBy = (try? m.pictureLock()) ?? nil
     }
 
     /// Every action funnels through here: write on the queue, then re-read that monitor (FR8).

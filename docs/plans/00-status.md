@@ -33,7 +33,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 | F1b | feature | built 2026-10-23; no gate (defect fixes from the second adversarial pass, `A2`, plus `A1`, whose decision criterion in the register was met by measurement) | v1.0 | — | agent | `docs/plans/F1b.md` | 5 planned |
 | F1c | feature | built 2026-10-23; no gate (FR9 defect `A4`, found by the owner's `O9` check) | v1.0 | — | agent | `docs/plans/F1c.md` | 1 planned |
 | F2 | feature | built 2026-10-21 (gate crossed 2026-10-21); adversarially reviewed 2026-10-22, one major and nine minors, all fixed but one accepted (`docs/reviews/F2.md`) | v1.0 | — | agent | `docs/plans/F2.md` | 3 planned |
-| F3 | feature | gate crossed 2026-10-27 ("d14 is ratified"); building | v1.0 | — | agent | `docs/plans/F3.md` | 2 planned |
+| F3 | feature | gate crossed 2026-10-27 ("d14 is ratified"); built 2026-10-27; adversarially reviewed the same day, one major and six minors, all fixed but the two that cannot be (`docs/reviews/F3.md`) | v1.0 | — | agent | `docs/plans/F3.md` | 2 planned |
 
 ## Registers
 
@@ -46,7 +46,7 @@ Counted from the register itself. A register with no rows still gets a line.
 | Owner items (`O`) | 16 | 6 | 0 | 10 |
 | Agent items (`A`) | 4 | 0 | 0 | 4 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
-| Mutations (`M`) | 12 | 3 | 0 | 9 |
+| Mutations (`M`) | 13 | 2 | 2 | 9 |
 | Chores (`C`) | 4 | 0 | 1 | 3 |
 | Gates (`G`) | 6 | 0 | 3 | 3 |
 
@@ -69,7 +69,8 @@ Counted from the register itself. A register with no rows still gets a line.
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 9 |
-| `M` | proposed | 3 |
+| `M` | proposed | 2 |
+| `M` | unknown | 2 |
 | `C` | done | 3 |
 | `C` | unknown | 1 |
 | `G` | done | 3 |
@@ -121,10 +122,11 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | unassigned | G5 | — | unknown | C4 polish pass |
 | unassigned | G6 | — | unknown | milestone boundary v1.0 → v1.5 |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
-| unassigned | M10 | — | proposed | Treat 0xF0 = 0x34 as a lock for every vendor, not only the one in the table |
-| unassigned | M11 | — | proposed | Write brightness while the last lock read said locked |
+| unassigned | M10 | — | unknown | Treat 0xF0 = 0x34 as a lock for every vendor, not only the one in the table |
+| unassigned | M11 | — | unknown | Write brightness while the last lock read said locked |
 | unassigned | M12 | — | proposed | Serve a cached capabilities string to a monitor with a different key |
+| unassigned | M13 | — | proposed | Guess "unlocked" instead of reading when the lock state is unknown (review F3 #1) |
 
 ---
 
-29 open register rows.
+30 open register rows.
