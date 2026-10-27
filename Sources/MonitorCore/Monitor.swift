@@ -25,6 +25,8 @@ public final class Monitor {
     public private(set) var capabilities: Capabilities?
     /// Maximum values the monitor reported for continuous codes, used to bound writes (review C8).
     private var maxima: [UInt8: UInt16] = [:]
+    /// What the last `pictureLock()` read said: the preset's label while brightness and contrast are locked (D14).
+    private var lockedByValue: String?
     private let lock = NSLock()
 
     public init(identity: MonitorIdentity, link: DDCMonitorLink, capabilities: Capabilities? = nil) {
@@ -50,10 +52,27 @@ public final class Monitor {
         return r
     }
 
-    /// The only write path. Refuses anything the monitor did not advertise (NFR5, M1, M4).
+    /// The preset label while the monitor is ignoring brightness and contrast, as of the last `pictureLock()` read.
+    public var lockedBy: String? { lock.lock(); defer { lock.unlock() }; return lockedByValue }
+
+    /// Reads the vendor's locking preset (D14): nil when this vendor has none, when the monitor does not
+    /// advertise the code (no I2C at all, NFR8), or when the value is not a locking one. The answer is
+    /// remembered, so `set` can refuse without a read of its own (M11).
+    @discardableResult
+    public func pictureLock() throws -> String? {
+        guard let p = VCP.lockingPreset(vendor: identity.vendor), capabilities?.advertises(p.code) == true else { return nil }
+        let value = UInt8(try get(p.code).current & 0xFF)
+        let by = p.values.contains(value) ? p.label : nil
+        lock.lock(); lockedByValue = by; lock.unlock()
+        return by
+    }
+
+    /// The only write path. Refuses anything the monitor did not advertise (NFR5, M1, M4), and a locked
+    /// code while the monitor's preset is ignoring it (D14, M11).
     public func set(_ code: UInt8, _ value: UInt16) throws {
         if VCP.factoryResets.contains(code) { throw DDCError.refusedFactoryReset(code: code) }
         guard let caps = capabilities, caps.advertises(code) else { throw DDCError.notAdvertised(code: code) }
+        if VCP.lockedCodes.contains(code), let by = lockedBy { throw DDCError.locked(code: code, by: by) }
         if let allowed = caps.values(for: code), !allowed.isEmpty {
             guard value <= 0xFF, allowed.contains(UInt8(value)) else { throw DDCError.valueNotAdvertised(code: code, value: value) }
         } else {

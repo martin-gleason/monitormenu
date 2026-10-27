@@ -19,9 +19,13 @@ public enum DDCError: Error, Equatable, CustomStringConvertible {
     case refusedFactoryReset(code: UInt8)
     case noSuchMonitor(String)
     case ambiguousMonitor(String, [String])
+    case locked(code: UInt8, by: String)
 
     public var description: String {
         switch self {
+        case .locked(let c, let by):
+            let what = c == VCP.brightness ? "brightness" : c == VCP.contrast ? "contrast" : String(format: "VCP 0x%02X", c)
+            return "\(what) is locked by the monitor's \(by) — turn it off in the monitor's menu"
         case .ioFailed(let what, let rc): return "\(what) failed (IOReturn \(rc))"
         case .timeout(let what): return "\(what) timed out"
         case .badReply(let why): return "bad reply: \(why)"
