@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-27 09:09 -05:00
+// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import AppKit
 import MonitorCore
 
@@ -11,26 +11,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var menuOpen = false
     private var rebuildWhenClosed = false
     private var hotKey: HotKey?
-    private let switcher = SwitcherPanel()
+    /// Made on first use (C4-T2): a panel that is never opened costs nothing.
+    private lazy var switcher: SwitcherPanel = {
+        let p = SwitcherPanel()
+        p.displayName = { [weak self] identity in self?.store.names.displayName(for: identity) ?? identity.name }
+        p.onPick = { [weak self] id, code in
+            self?.store.perform(on: id, retrainsLink: true, { try $0.setInput(code) }, completion: self?.report)
+        }
+        return p
+    }()
+    private static let icon = NSImage(systemSymbolName: "display", accessibilityDescription: "MonitorMenu")
+    private static let alertIcon = NSImage(systemSymbolName: "display.trianglebadge.exclamationmark", accessibilityDescription: "MonitorMenu: last action failed")
     private var hotKeySpec: String { UserDefaults.standard.string(forKey: "hotkey") ?? HotKey.defaultSpec }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // FR9: hand Siri the phrases and their parameter values; without this call Siri never learns them.
         MonitorMenuShortcuts.updateAppShortcutParameters()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        if let b = statusItem.button {
-            b.image = NSImage(systemSymbolName: "display", accessibilityDescription: "MonitorMenu")
-            b.image?.isTemplate = true
-        }
+        if let b = statusItem.button { b.image = Self.icon; b.image?.isTemplate = true }
         menu.delegate = self
         menu.autoenablesItems = false
         statusItem.menu = menu
         store.onChange = { [weak self] in self?.rebuild() }
         Actions.shared = Actions(store: store)
         Actions.shared.openSwitcher = { [weak self] in self?.openSwitcher() }
-        switcher.onPick = { [weak self] id, code in
-            self?.store.perform(on: id, retrainsLink: true, { try $0.setInput(code) }, completion: self?.report)
-        }
         // FR9: the default hotkey is live on first launch (D9).
         hotKey = HotKey(spec: hotKeySpec) { [weak self] in self?.openSwitcher() }
         if hotKey == nil { NSLog("MonitorMenu: hotkey \"%@\" could not be registered", hotKeySpec) }
@@ -242,10 +246,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func report(_ error: String?) {
         guard let error, let b = statusItem.button else { return }
         NSLog("MonitorMenu: %@", error)
-        b.image = NSImage(systemSymbolName: "display.trianglebadge.exclamationmark", accessibilityDescription: error)
+        b.image = Self.alertIcon
         b.toolTip = error
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
-            self?.statusItem.button?.image = NSImage(systemSymbolName: "display", accessibilityDescription: "MonitorMenu")
+            self?.statusItem.button?.image = Self.icon
             self?.statusItem.button?.toolTip = nil
         }
     }

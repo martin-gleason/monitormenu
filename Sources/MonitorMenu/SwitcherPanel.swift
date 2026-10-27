@@ -1,3 +1,4 @@
+// Created: 2026-10-19 19:52 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import AppKit
 import MonitorCore
 
@@ -5,6 +6,8 @@ import MonitorCore
 final class SwitcherPanel: NSPanel {
     private let content = SwitcherView()
     var onPick: ((String, UInt8) -> Void)?
+    /// FR10: the name to show for a monitor; set by the delegate from the store's names.
+    var displayName: ((MonitorIdentity) -> String)? { get { content.displayName } set { content.displayName = newValue } }
 
     init() {
         super.init(contentRect: NSRect(x: 0, y: 0, width: 320, height: 200), styleMask: [.titled, .nonactivatingPanel, .hudWindow, .utilityWindow], backing: .buffered, defer: true)
@@ -39,6 +42,7 @@ final class SwitcherView: NSView {
     var states: [MonitorState] = [] { didSet { rebuild() } }
     var onPick: ((String, UInt8) -> Void)?
     var onCancel: (() -> Void)?
+    var displayName: ((MonitorIdentity) -> String)?
     private var rows: [(id: String, code: UInt8)] = []
     private(set) var preferredHeight: CGFloat = 60
 
@@ -50,9 +54,8 @@ final class SwitcherView: NSView {
         rows = []
         var y: CGFloat = 10
         func place(_ v: NSView, height: CGFloat) { v.frame = NSRect(x: 16, y: y, width: 288, height: height - 4); addSubview(v); y += height }
-        let names = MonitorNames()
         for s in states {
-            let shown = names.displayName(for: s.identity)
+            let shown = displayName?(s.identity) ?? s.name
             let header = NSTextField(labelWithString: shown == s.name ? s.name : "\(shown)  ·  \(s.name)")
             header.font = .systemFont(ofSize: 11, weight: .semibold); header.textColor = .secondaryLabelColor
             place(header, height: 20)
