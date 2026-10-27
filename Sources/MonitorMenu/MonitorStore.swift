@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-27 09:09 -05:00
+// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-27 09:26 -05:00
 import Foundation
 import CoreGraphics
 import MonitorCore
@@ -34,9 +34,13 @@ final class MonitorStore {
     var onChange: (() -> Void)?
     private let work = DispatchQueue(label: "dev.marty.MonitorMenu.work", qos: .userInitiated)
     private var rediscoverPending = false
-    /// Capabilities by monitor serial, kept across rediscovery so a monitor that is mid-link-renegotiation
-    /// (PiP on/off and input switches both make macOS reconfigure the display) is not dropped.
-    private var knownCapabilities: [String: Capabilities] = [:]
+    /// Capabilities by monitor serial, on disk and shared with `monitorctl` (C4-T1). Also what keeps a monitor
+    /// listed while it is mid-link-renegotiation (PiP on/off and input switches both make macOS reconfigure
+    /// the display) and not answering a fresh read.
+    private let capabilitiesCache = CapabilitiesCache()
+    /// For the timing lines in the log (C4-T3).
+    static let launched = Date()
+    static func sinceLaunch() -> String { String(format: "%.0f ms after launch", Date().timeIntervalSince(launched) * 1000) }
     private var emptyRetries = 0
     /// One discovery at a time (A2-7): a request that arrives during one runs once after it, however many asked.
     private var discoverInFlight = false
@@ -67,8 +71,8 @@ final class MonitorStore {
     }
 
     /// Finds monitors and reads each one's capabilities and state. Displays without DDC are dropped (FR1, D4).
-    /// `rereadCapabilities`: the user's Rescan; otherwise a monitor seen before keeps its cached capabilities
-    /// (they are fixed per monitor, and the 493-byte read costs about 2.3 s on the G3223D).
+    /// `rereadCapabilities`: the user's Rescan reads every monitor's string again; otherwise the cache answers
+    /// (the string is fixed per monitor, and the 493-byte read costs about 2.3 s on the G3223D).
     func discover(rereadCapabilities: Bool = false) {
         onMain { [weak self] in
             guard let self else { return }
@@ -87,40 +91,33 @@ final class MonitorStore {
                         // A display came and went during a link renegotiation, or CoreGraphics had not paired it yet:
                         // look again shortly, a few times.
                         self.emptyRetries += 1
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.discover() }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { self.discover() }
                     } else { self.emptyRetries = 0 }
                 }
             }
         }
     }
 
-    /// Runs on the work queue. Main must never block on the work queue (it does not: every DDC call is
-    /// dispatched asynchronously from main), or the one `main.sync` hop here would deadlock.
+    /// Runs on the work queue; touches nothing that belongs to main.
     private func discoverSync(rereadCapabilities: Bool = false) -> [MonitorState] {
-            var found: [MonitorState] = []
-            let known = DispatchQueue.main.sync { self.knownCapabilities }   // one hop, before any DDC work
-            let discovered = MonitorDiscovery.discover()
-            for m in discovered {
-                var s = MonitorState(monitor: m)
-                let key = m.identity.key
-                if let caps = known[key], !rereadCapabilities {
-                    m.adopt(capabilities: caps)
-                } else {
-                    do {
-                        let caps = try m.loadCapabilities()
-                        DispatchQueue.main.async { self.knownCapabilities[key] = caps }
-                    } catch {
-                        s.lastError = "\(error)"
-                        // Not answering right now. Keep it if we have ever read its capabilities; otherwise it is not a DDC monitor.
-                        if let caps = known[key] { m.adopt(capabilities: caps) } else { continue }
-                    }
-                }
-                s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes()
-                self.readValues(into: &s)
-                found.append(s)
+        let started = Date()
+        var found: [MonitorState] = []
+        for m in MonitorDiscovery.discover() {
+            var s = MonitorState(monitor: m)
+            do {
+                try m.loadCapabilities(cache: capabilitiesCache, fresh: rereadCapabilities)
+            } catch {
+                s.lastError = "\(error)"
+                // Not answering right now. Keep it if its string was ever read; otherwise it is not a DDC monitor.
+                if let raw = capabilitiesCache.raw(for: m.identity) { m.adopt(capabilities: Capabilities.parse(raw)) } else { continue }
             }
-            NSLog("MonitorMenu: discovery → %@", found.map { "\($0.name) [\($0.id)] display \($0.displayID.map(String.init) ?? "?")\($0.lastError.map { " (" + $0 + ")" } ?? "")" }.joined(separator: ", "))
-            return found
+            s.inputs = m.inputs(); s.pipModes = m.pipModes(); s.powerModes = m.powerModes()
+            self.readValues(into: &s)
+            found.append(s)
+        }
+        NSLog("MonitorMenu: discovery → %@ (%.0f ms, %@)", found.map { "\($0.name) [\($0.id)] display \($0.displayID.map(String.init) ?? "?")\($0.lastError.map { " (" + $0 + ")" } ?? "")" }.joined(separator: ", "),
+              Date().timeIntervalSince(started) * 1000, Self.sinceLaunch())
+        return found
     }
 
     /// Re-reads live values for every monitor (menu open, after an action) — FR8.
@@ -131,10 +128,12 @@ final class MonitorStore {
             let snapshot = self.states
             self.work.async { [weak self] in
                 guard let self else { return }
+                let started = Date()
                 var updated = snapshot
                 for i in updated.indices where id == nil || updated[i].id == id {
                     self.readValues(into: &updated[i])
                 }
+                NSLog("MonitorMenu: refresh %@ in %.0f ms", id ?? "all", Date().timeIntervalSince(started) * 1000)
                 DispatchQueue.main.async {
                     // Merge by id, and only onto the same Monitor object: a discovery that landed meanwhile
                     // holds a fresh IOAVService, and the snapshot's stale one would fail with MACH_SEND_INVALID_DEST.
@@ -206,7 +205,7 @@ final class MonitorStore {
                 }
                 DispatchQueue.main.async {
                     completion?(err)
-                    if retrainsLink, err == nil { DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in self?.discover() } }
+                    if retrainsLink, err == nil { DispatchQueue.main.asyncAfter(deadline: .now() + 6) { self.discover() } }
                 }
                 self.refresh(only: id)
             }
