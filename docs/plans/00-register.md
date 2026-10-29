@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-27 10:20 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-29 12:25 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -140,8 +140,8 @@ Named ways to break the code, each paired with the test that must catch it. A te
 | M7 | `Sources/MonitorCore/MonitorNames.swift` | Key names by CoreGraphics display id instead of serial | `MonitorNamesTests.testNamesAreKeyedBySerialNotDisplayID` | killed 2026-10-21: 3 failures / 1 test (`scripts/mutate.sh M7`) |
 | M8 | `Sources/MonitorCore/DDCProtocol.swift` | Retry after a transport timeout (stacks a second call on the abandoned one) | `DDCFrameTests.testTimeoutIsNotRetried` | killed 2026-10-23 |
 | M9 | `Sources/MonitorCore/Monitor.swift` | Write a continuous code without first learning its maximum | `WhitelistTests.testContinuousWriteReadsTheMaximumFirst` | killed 2026-10-23 |
-| M10 | `Sources/MonitorCore/Monitor.swift` | Treat `0xF0` = `0x34` as a lock for every vendor, not only the one in the table | `LockTests.testLockIsVendorKeyed` | run — killed 2026-10-27: 4 failures / 1 test (`scripts/mutate.sh M10`) |
-| M11 | `Sources/MonitorCore/Monitor.swift` | Write brightness while the last lock read said locked | `LockTests.testLockedCodesAreNotWritten` | run — killed 2026-10-27: 2 failures / 1 test (`scripts/mutate.sh M11`) |
-| M12 | `Sources/MonitorCore/CapabilitiesCache.swift` | Serve a cached capabilities string to a monitor with a different key | `CapabilitiesCacheTests.testCacheIsPerMonitor` | run — killed 2026-10-27: 4 failures / 1 test (`scripts/mutate.sh M12`) |
-| M13 | `Sources/MonitorCore/Monitor.swift` | Guess "unlocked" instead of reading when the lock state is unknown (review F3 #1) | `LockTests.testFailedLockReadIsNotStale` | run — killed 2026-10-27: 2 failures / 1 test (`scripts/mutate.sh M13`) |
-| M14 | `Sources/MonitorCore/Monitor.swift` | Offer the hidden PiP values anyway (ignore `VCP.hiddenPiPValues` in `pipModes()`) | `WhitelistTests.testHiddenPiPValuesAreNotOfferedButStillSettable` | run — killed 2026-10-29: 1 failure / 1 test (`scripts/mutate.sh M14`) |
+| M10 | `Sources/MonitorCore/Monitor.swift` | Treat `0xF0` = `0x34` as a lock for every vendor, not only the one in the table | `LockTests.testLockIsVendorKeyed` | killed 2026-10-27: 4 failures / 1 test (`scripts/mutate.sh M10`) |
+| M11 | `Sources/MonitorCore/Monitor.swift` | Write brightness while the last lock read said locked | `LockTests.testLockedCodesAreNotWritten` | killed 2026-10-27: 2 failures / 1 test (`scripts/mutate.sh M11`) |
+| M12 | `Sources/MonitorCore/CapabilitiesCache.swift` | Serve a cached capabilities string to a monitor with a different key | `CapabilitiesCacheTests.testCacheIsPerMonitor` | killed 2026-10-27: 4 failures / 1 test (`scripts/mutate.sh M12`) |
+| M13 | `Sources/MonitorCore/Monitor.swift` | Guess "unlocked" instead of reading when the lock state is unknown (review F3 #1) | `LockTests.testFailedLockReadIsNotStale` | killed 2026-10-27: 2 failures / 1 test (`scripts/mutate.sh M13`) |
+| M14 | `Sources/MonitorCore/Monitor.swift` | Offer the hidden PiP values anyway (ignore `VCP.hiddenPiPValues` in `pipModes()`) | `WhitelistTests.testHiddenPiPValuesAreNotOfferedButStillSettable` | killed 2026-10-29: 1 failure / 1 test (`scripts/mutate.sh M14`) |

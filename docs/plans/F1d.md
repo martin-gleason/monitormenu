@@ -1,8 +1,8 @@
 # F1d — PiP modes by name, one entry per layout
 
-Created: 2026-10-29 12:11 -05:00 · Edited: 2026-10-29 12:15 -05:00
+Created: 2026-10-29 12:11 -05:00 · Edited: 2026-10-29 12:25 -05:00
 
-**Status:** built 2026-10-29, evidence gathered, review pending; no gate (closes `O5` and `RR5` under FR4; the one user-visible choice, hiding ignored and duplicate values, is `D21`, ratified by the owner at the desk: "so for v1.0, let's hide that. and open it up as a more customizable option in v1.5") · **Milestone:** v1.0 (patch 1.0.1) · **Owner:** agent · **Retrofits:** F1 (FR4)
+**Status:** reviewed 2026-10-29 (`docs/reviews/F1d.md`), fixes applied; no gate (closes `O5` and `RR5` under FR4; the one user-visible choice, hiding ignored and duplicate values, is `D21`, ratified by the owner at the desk: "so for v1.0, let's hide that. and open it up as a more customizable option in v1.5") · **Milestone:** v1.0 · **Ships as:** 1.0.1 · **Owner:** agent · **Retrofits:** F1 (FR4)
 
 Learning level 5%, locked (`O2`); every task is `owner: agent`.
 
@@ -36,9 +36,13 @@ Owner: agent · `docs/reviews/F1d.md`. Checkpoint: findings fixed or on the reco
 | M14 killed | 1 failure / 1 test | `scripts/mutate.sh M14` |
 | six modes listed | text: `Off (0x00) PiP small (0x21) PiP large (0x22) PbP 50/50 (0x24) PbP 25/75 (0x29) PbP 75/25 (0x2A)`; JSON `pipModes` names the same six | `.build/debug/monitorctl list`, `list --json` |
 | hidden value still settable | `set pip 0x2D` → `pip → PbP 25/75`; `get pip` → `PbP 25/75 (0x2D)` | owner at the desk, one retrain |
-| ratio word | `set pip 25/75` → `PbP 25/75 (0x29)`; then `off` → `Off (0x00)` | same |
+| ratio word | `set pip 25/75` → `pip → PbP 25/75`; `get pip` → `PbP 25/75 (0x29)`; then `off`, `get pip` → `Off (0x00)` | same |
 | menu submenu shows six | not yet checked in the installed app: needs the 1.0.1 build installed (after the review) | — |
 | mapping on record | `docs/learnings/2026-10-29-pip-values.md` | — |
+
+## Process note
+
+The plan was committed 112 seconds before the code, with its status already reading "built the same day" (review F1d #6): the gate was the owner's spoken yes at the desk, and the written plan followed the build. On the record; the next retrofit writes the plan before `swift build`.
 
 ## Risks touched
 
