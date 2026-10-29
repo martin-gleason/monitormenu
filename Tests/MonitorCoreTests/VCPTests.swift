@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:26 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:14 -05:00
 import XCTest
 @testable import MonitorCore
 
@@ -15,7 +15,9 @@ final class VCPTests: XCTestCase {
 
     func testLabelsFallBackToHex() {
         XCTAssertEqual(VCP.label(code: VCP.pipMode, value: 0x24), "PbP 50/50")
-        XCTAssertEqual(VCP.label(code: VCP.pipMode, value: 0x2E), "0x2E", "unmapped G3223D value stays hex until O5")
+        XCTAssertEqual(VCP.label(code: VCP.pipMode, value: 0x29), "PbP 25/75", "mapped at the desk 2026-10-29 (O5)")
+        XCTAssertEqual(VCP.label(code: VCP.pipMode, value: 0x2E), "PbP 75/25", "the duplicate carries the same name as 0x2A")
+        XCTAssertEqual(VCP.label(code: VCP.pipMode, value: 0x33), "0x33", "a value no table names stays hex")
         XCTAssertEqual(VCP.label(code: VCP.inputSource, value: 0x1B), "USB-C")
         XCTAssertEqual(VCP.label(code: VCP.powerMode, value: 0x04), "Off (standby)")
     }
@@ -23,6 +25,8 @@ final class VCPTests: XCTestCase {
     func testPiPAliasesAndVendorCodes() {
         XCTAssertEqual(VCP.pipCode(from: "small"), 0x21)
         XCTAssertEqual(VCP.pipCode(from: "split"), 0x24)
+        XCTAssertEqual(VCP.pipCode(from: "25/75"), 0x29)
+        XCTAssertEqual(VCP.pipCode(from: "75-25"), 0x2A)
         XCTAssertEqual(VCP.pipCode(from: "off"), 0)
         XCTAssertEqual(VCP.pipCode(from: "0x2E"), 0x2E)
         XCTAssertNil(VCP.pipCode(from: "sideways"))
@@ -30,7 +34,7 @@ final class VCPTests: XCTestCase {
         XCTAssertNil(VCP.pipCodes(vendor: 0x22F0), "HP: unknown until the Omen arrives (NFR8)")
         // A Dell fixture has PiP; the same capabilities under an unknown vendor do not (FR4, NFR8).
         let dell = Monitor(identity: MonitorIdentity(name: "d", vendor: 0x10AC, model: 1, serial: 1), link: DDCMonitorLink(channel: RecordingChannel(), label: "d"), capabilities: Capabilities.parse(Fixtures.g3223d))
-        XCTAssertTrue(dell.hasPiP); XCTAssertEqual(dell.pipModes().count, 10)
+        XCTAssertTrue(dell.hasPiP); XCTAssertEqual(dell.pipModes().count, 6, "ten advertised, four hidden (D21)")
         let other = Monitor(identity: MonitorIdentity(name: "o", vendor: 0x22F0, model: 1, serial: 1), link: DDCMonitorLink(channel: RecordingChannel(), label: "o"), capabilities: Capabilities.parse(Fixtures.g3223d))
         XCTAssertFalse(other.hasPiP); XCTAssertThrowsError(try other.setPiPMode(0x21))
     }
