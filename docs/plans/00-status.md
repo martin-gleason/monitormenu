@@ -33,7 +33,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 | F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass done 2026-10-23, fixed in `F1b` (`docs/plans/F1b.md`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
 | F1b | feature | built 2026-10-23; no gate (defect fixes from the second adversarial pass, `A2`, plus `A1`, whose decision criterion in the register was met by measurement) | v1.0 | — | agent | `docs/plans/F1b.md` | 5 planned |
 | F1c | feature | built 2026-10-23; no gate (FR9 defect `A4`, found by the owner's `O9` check) | v1.0 | — | agent | `docs/plans/F1c.md` | 1 planned |
-| F1d | feature | proposed 2026-10-29, built the same day; no gate (closes `O5` and `RR5` under FR4; the one user-visible choice, hiding ignored and duplicate values, is `D21`, ratified by the owner at the desk: "so for v1.0, let's hide that | v1.0 (patch 1.0.1) | — | agent | `docs/plans/F1d.md` | 4 planned |
+| F1d | feature | built 2026-10-29, evidence gathered, review pending; no gate (closes `O5` and `RR5` under FR4; the one user-visible choice, hiding ignored and duplicate values, is `D21`, ratified by the owner at the desk: "so for v1.0, let's hide that | v1.0 (patch 1.0.1) | — | agent | `docs/plans/F1d.md` | 4 planned |
 | F2 | feature | built 2026-10-21 (gate crossed 2026-10-21); adversarially reviewed 2026-10-22, one major and nine minors, all fixed but one accepted (`docs/reviews/F2.md`) | v1.0 | — | agent | `docs/plans/F2.md` | 3 planned |
 | F3 | feature | gate crossed 2026-10-27 ("d14 is ratified"); built 2026-10-27; adversarially reviewed the same day, one major and six minors, all fixed but the two that cannot be (`docs/reviews/F3.md`) | v1.0 | — | agent | `docs/plans/F3.md` | 2 planned |
 | F4 | feature | proposed; gate open, waits for the owner's yes | v1.5 | — | agent (T1 and T4 are the owner's: only a person can speak to Siri) | `docs/plans/F4.md` | 4 planned |
@@ -49,7 +49,7 @@ Counted from the register itself. A register with no rows still gets a line.
 | Owner items (`O`) | 16 | 5 | 0 | 11 |
 | Agent items (`A`) | 5 | 1 | 0 | 4 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
-| Mutations (`M`) | 14 | 1 | 4 | 9 |
+| Mutations (`M`) | 14 | 0 | 5 | 9 |
 | Chores (`C`) | 6 | 2 | 0 | 4 |
 | Gates (`G`) | 6 | 0 | 3 | 3 |
 
@@ -74,8 +74,7 @@ Counted from the register itself. A register with no rows still gets a line.
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 9 |
-| `M` | proposed | 1 |
-| `M` | unknown | 4 |
+| `M` | unknown | 5 |
 | `C` | done | 4 |
 | `C` | proposed | 2 |
 | `G` | done | 3 |
@@ -136,7 +135,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | unassigned | M11 | — | unknown | Write brightness while the last lock read said locked |
 | unassigned | M12 | — | unknown | Serve a cached capabilities string to a monitor with a different key |
 | unassigned | M13 | — | unknown | Guess "unlocked" instead of reading when the lock state is unknown (review F3 #1) |
-| unassigned | M14 | — | proposed | Offer the hidden PiP values anyway (ignore VCP.hiddenPiPValues in pipModes()) |
+| unassigned | M14 | — | unknown | Offer the hidden PiP values anyway (ignore VCP.hiddenPiPValues in pipModes()) |
 
 ---
 
