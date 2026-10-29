@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:26 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:14 -05:00
 import Foundation
 
 /// MCCS codes the app knows how to label. Anything else the monitor advertises is still
@@ -31,14 +31,17 @@ public enum VCP {
     /// The codes such a preset locks.
     public static let lockedCodes: Set<UInt8> = [brightness, contrast]
 
-    /// off · small · large · split (also pip/on/pbp/half) · 0xNN · decimal → the PiP mode value.
+    /// off · small · large · split (also pip/on/pbp/half) · 25/75 · 75/25 · 0xNN · decimal → the PiP mode value.
+    /// The ratio words name the Mac's share first, as the G3223D draws them (left pane = this Mac).
     public static func pipCode(from text: String) -> UInt8? {
         let key = text.lowercased().trimmingCharacters(in: .whitespaces)
         switch key {
         case "off", "0": return 0x00
         case "small", "pip", "on": return 0x21
         case "large": return 0x22
-        case "split", "pbp", "half": return 0x24
+        case "split", "pbp", "half", "50/50", "50-50": return 0x24
+        case "25/75", "25-75": return 0x29
+        case "75/25", "75-25": return 0x2A
         default:
             if key.hasPrefix("0x"), let v = UInt8(key.dropFirst(2), radix: 16) { return v }
             return UInt8(key)
@@ -66,12 +69,25 @@ public enum VCP {
     public static let powerNames: [UInt8: String] = [0x01: "On", 0x02: "Standby", 0x03: "Suspend", 0x04: "Off (standby)", 0x05: "Off"]
 
     /// Vendor value labels, keyed by (code, value). Consulted only when the capabilities string
-    /// advertises that code (NFR8). Dell PiP labels come from m1ddc's documentation (D7);
-    /// the G3223D's other values stay hex until the owner's mapping session (`O5`).
+    /// advertises that code (NFR8). Dell PiP labels come from m1ddc's documentation (D7) and from
+    /// the mapping session at the G3223D on 2026-10-29 (`docs/learnings/2026-10-29-pip-values.md`,
+    /// closed `O5`): 0x29/0x2A are the 25/75 and 75/25 splits with this Mac on the left, and
+    /// 0x2D/0x2E draw the same two pictures. Values a monitor advertises but no table names stay hex.
     public static let vendorLabels: [UInt8: [UInt8: String]] = [
         pipMode: [0x00: "Off", 0x21: "PiP small", 0x22: "PiP large", 0x24: "PbP 50/50",
+                  0x29: "PbP 25/75", 0x2A: "PbP 75/25", 0x2D: "PbP 25/75", 0x2E: "PbP 75/25",
                   0x2B: "PbP 26/74", 0x2C: "PbP 74/26", 0x41: "PbP 2×2"],
     ]
+
+    /// Advertised PiP values the menu and `monitorctl list` do not offer (D21): ones the firmware
+    /// ignores and ones that draw the same picture as another value. Mapped at the desk 2026-10-29.
+    /// `Monitor.setPiPMode` still accepts them, because the monitor advertises them (NFR5); the
+    /// list is keyed by vendor like the codes themselves (NFR8), and `D22` (v1.5) hands it to the user.
+    public static let hiddenPiPValues: [UInt32: Set<UInt8>] = [
+        0x10AC: [0x01, 0x02,    // accepted on the bus, read back as Off within a second, no link retrain
+                 0x2D, 0x2E],   // indistinguishable from 0x29 and 0x2A on screen and in the OSD
+    ]
+    public static func hiddenPiPValues(vendor: UInt32) -> Set<UInt8> { hiddenPiPValues[vendor] ?? [] }
 
     public static func label(code: UInt8, value: UInt8) -> String {
         switch code {

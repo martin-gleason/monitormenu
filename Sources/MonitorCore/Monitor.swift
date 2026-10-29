@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:26 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:14 -05:00
 import Foundation
 import CoreGraphics
 
@@ -121,7 +121,13 @@ public final class Monitor {
     }
     public var hasPiP: Bool { pipCodes != nil }
     public var hasPiPSource: Bool { pipCodes.map { capabilities?.advertises($0.source) == true } ?? false }
-    public func pipModes() -> [UInt8] { pipCodes.flatMap { capabilities?.values(for: $0.mode) } ?? [] }
+    /// The PiP values to offer: what the monitor advertises minus the vendor's hidden ones (D21).
+    /// `setPiPMode` is not filtered; a hidden value is still an advertised one (NFR5).
+    public func pipModes() -> [UInt8] {
+        guard let c = pipCodes, let all = capabilities?.values(for: c.mode) else { return [] }
+        let hidden = VCP.hiddenPiPValues(vendor: identity.vendor)
+        return all.filter { !hidden.contains($0) }
+    }
     public func currentPiPMode() throws -> UInt8 {
         guard let c = pipCodes else { throw DDCError.notAdvertised(code: VCP.pipMode) }
         return UInt8(try get(c.mode).current & 0xFF)
