@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-27 09:26 -05:00
+// Created: 2026-10-19 19:37 -05:00 · Edited: 2026-10-29 12:25 -05:00
 import Foundation
 import CoreGraphics
 import MonitorCore
@@ -169,7 +169,7 @@ final class MonitorStore {
             s.currentInput = try m.currentInput()
             s.brightness = try m.brightness()
             s.contrast = try m.contrast()
-            if m.hasPiP { s.pipMode = try m.currentPiPMode() }
+            if m.hasPiP { s.pipMode = VCP.shownPiPValue(vendor: m.identity.vendor, value: try m.currentPiPMode()) }   // a hidden duplicate ticks its twin (D21)
         } catch { s.lastError = "\(error)" }
         // D14: one read, only on a vendor with a locking preset. A failed read shows live sliders, and the
         // monitor's state is then "unknown", so the next write reads again before deciding (review F3 #1).

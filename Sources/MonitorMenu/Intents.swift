@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:52 -05:00 · Edited: 2026-10-27 09:26 -05:00
+// Created: 2026-10-19 19:52 -05:00 · Edited: 2026-10-29 12:25 -05:00
 import AppIntents
 import AppKit
 import MonitorCore
@@ -15,10 +15,12 @@ enum InputChoice: String, AppEnum {
 }
 
 enum PiPChoice: String, AppEnum {
-    case off, small, large, split
+    // Raw values are the words `VCP.pipCode(from:)` understands; the ratio names this Mac's share first.
+    case off, small, large, split, split2575 = "25/75", split7525 = "75/25"
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Picture-in-Picture Mode"
     static var caseDisplayRepresentations: [PiPChoice: DisplayRepresentation] = [
         .off: "Off", .small: "Small window", .large: "Large window", .split: "Side by side",
+        .split2575: "Side by side, this Mac 25%", .split7525: "Side by side, this Mac 75%",
     ]
 }
 

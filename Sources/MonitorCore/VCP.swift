@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:14 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:25 -05:00
 import Foundation
 
 /// MCCS codes the app knows how to label. Anything else the monitor advertises is still
@@ -88,6 +88,13 @@ public enum VCP {
                  0x2D, 0x2E],   // indistinguishable from 0x29 and 0x2A on screen and in the OSD
     ]
     public static func hiddenPiPValues(vendor: UInt32) -> Set<UInt8> { hiddenPiPValues[vendor] ?? [] }
+
+    /// A hidden duplicate and the offered value that draws the same picture, so a menu can tick the
+    /// offered entry when the monitor reports the hidden one (review F1d #1). No-ops have no twin:
+    /// the monitor never reads them back.
+    public static let pipTwins: [UInt32: [UInt8: UInt8]] = [0x10AC: [0x2D: 0x29, 0x2E: 0x2A]]
+    /// The value to show for what the monitor reports: the twin for a hidden duplicate, else itself.
+    public static func shownPiPValue(vendor: UInt32, value: UInt8) -> UInt8 { pipTwins[vendor]?[value] ?? value }
 
     public static func label(code: UInt8, value: UInt8) -> String {
         switch code {
