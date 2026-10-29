@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:14 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:25 -05:00
 import XCTest
 @testable import MonitorCore
 
@@ -30,7 +30,6 @@ final class WhitelistTests: XCTestCase {
                        "the first brightness write on a Dell is preceded by one read of the lock preset (D14) and one of its range; discrete codes need neither")
     }
 
-    /// M9 (review A2-3): a continuous code is never written before its maximum is known, on any surface.
     /// D21: the hidden PiP values leave the list, not the whitelist. M14.
     func testHiddenPiPValuesAreNotOfferedButStillSettable() throws {
         let (m, ch) = Fixtures.monitor(caps: Fixtures.g3223d)
@@ -40,6 +39,7 @@ final class WhitelistTests: XCTestCase {
         XCTAssertEqual(ch.writes, [DDCFrame.setVCP(0xE9, 0x2D)], "an advertised value still writes (NFR5); hiding is a list, not a refusal")
     }
 
+    /// M9 (review A2-3): a continuous code is never written before its maximum is known, on any surface.
     func testContinuousWriteReadsTheMaximumFirst() throws {
         let ch = RecordingChannel(); ch.replies = [Fixtures.replyRedGain]          // 0x16: max 100
         let (m, _) = Fixtures.monitor(caps: Fixtures.g3223d, channel: ch)

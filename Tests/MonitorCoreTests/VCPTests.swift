@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:14 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:25 -05:00
 import XCTest
 @testable import MonitorCore
 
@@ -27,6 +27,9 @@ final class VCPTests: XCTestCase {
         XCTAssertEqual(VCP.pipCode(from: "split"), 0x24)
         XCTAssertEqual(VCP.pipCode(from: "25/75"), 0x29)
         XCTAssertEqual(VCP.pipCode(from: "75-25"), 0x2A)
+        XCTAssertEqual(VCP.shownPiPValue(vendor: 0x10AC, value: 0x2D), 0x29, "a hidden duplicate ticks its offered twin in the menu (review F1d #1)")
+        XCTAssertEqual(VCP.shownPiPValue(vendor: 0x10AC, value: 0x21), 0x21)
+        XCTAssertEqual(VCP.shownPiPValue(vendor: 0x22F0, value: 0x2D), 0x2D, "no table for the vendor: shown as reported")
         XCTAssertEqual(VCP.pipCode(from: "off"), 0)
         XCTAssertEqual(VCP.pipCode(from: "0x2E"), 0x2E)
         XCTAssertNil(VCP.pipCode(from: "sideways"))

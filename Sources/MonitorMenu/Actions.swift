@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:52 -05:00 · Edited: 2026-10-27 09:26 -05:00
+// Created: 2026-10-19 19:52 -05:00 · Edited: 2026-10-29 12:25 -05:00
 import Foundation
 import CoreGraphics
 import MonitorCore
@@ -77,7 +77,7 @@ final class Actions {
         return store.names.displayName(for: s.identity)
     }
 
-    /// Accepts off, small, large, split, or a hex/decimal code the monitor advertises.
+    /// Accepts off, small, large, split (50/50), 25/75, 75/25 (this Mac's share first), or a hex/decimal code the monitor advertises.
     @discardableResult
     func setPiP(_ text: String, monitor: String? = nil) async throws -> (monitor: String, mode: String) {
         let s = try await resolve(monitor)
@@ -104,11 +104,12 @@ final class Actions {
 
     func rescan() { store.discover(rereadCapabilities: true) }
 
-    /// monitormenu://input/hdmi2?display=dell · brightness/60 · contrast/70 · pip/small · pip-source/hdmi1 · sleep · switcher · rescan · rename/Desk?display=dell
+    /// monitormenu://input/hdmi2?display=dell · brightness/60 · contrast/70 · pip/small · pip/25/75 · pip-source/hdmi1 · sleep · switcher · rescan · rename/Desk?display=dell
     func handle(url: URL) async throws -> String {
         let display = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "display" }?.value
         let verb = url.host ?? ""
-        let arg = url.pathComponents.dropFirst().first ?? ""
+        // `pip/25/75` is one argument with a slash in it, so the pip verb takes the whole path (review F1d #2).
+        let arg = verb == "pip" ? String(url.path.dropFirst()) : (url.pathComponents.dropFirst().first ?? "")
         switch verb {
         case "input": let r = try await switchInput(arg, monitor: display); return "\(r.monitor): input → \(r.input)"
         case "rename":

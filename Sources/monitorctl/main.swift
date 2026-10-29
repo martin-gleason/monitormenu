@@ -1,4 +1,4 @@
-// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-27 09:26 -05:00
+// Created: 2026-10-19 19:23 -05:00 · Edited: 2026-10-29 12:25 -05:00
 import Foundation
 import MonitorCore
 
@@ -10,7 +10,8 @@ import MonitorCore
 //   monitorctl set input <hdmi1|hdmi2|dp1|dp2|usbc|0xNN> [--display X]
 //   monitorctl set <brightness|contrast> <0-100> [--display X]
 //   monitorctl set power <standby|on|0xNN> [--display X]
-//   monitorctl set pip <off|small|large|split|0xNN> [--display X]    monitorctl set pip-source <input> [--display X]
+//   monitorctl set pip <off|small|large|split|25/75|75/25|0xNN> [--display X]    monitorctl set pip-source <input> [--display X]
+//     ratios name this Mac's share first; `list` offers one entry per picture, `set pip 0xNN` takes any advertised value
 //   monitorctl probe [--display X] [--count N]       RR2: read reliability over N reads
 //   monitorctl rename "<name>" [--display X]         FR10: name a monitor; --clear removes the name
 //
@@ -121,7 +122,7 @@ case "set":
             let v: UInt8 = args[2] == "standby" ? 0x04 : args[2] == "on" ? 0x01 : args[2] == "off" ? 0x05 : UInt8(args[2].replacingOccurrences(of: "0x", with: ""), radix: 16) ?? 0
             try m.setPower(v); print("\(shown(m)): power → \(VCP.label(code: VCP.powerMode, value: v))")
         case "pip":
-            guard let v = VCP.pipCode(from: args[2]) else { fail("unknown pip mode \(args[2]) — off, small, large, split, or 0xNN") }
+            guard let v = VCP.pipCode(from: args[2]) else { fail("unknown pip mode \(args[2]) — off, small, large, split (50/50), 25/75, 75/25 (this Mac's share first), or 0xNN") }
             try m.setPiPMode(v); print("\(shown(m)): pip → \(VCP.label(code: VCP.pipMode, value: v))")
         case "pip-source":
             guard let code = VCP.inputCode(from: args[2]) else { fail("unknown input \(args[2])") }
