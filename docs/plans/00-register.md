@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-29 12:25 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-30 07:54 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -32,7 +32,7 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | D16 | ratified | v1.5 | **v1.0 ships with `F3` and `C4`; milestone v1.5 opens.** Owner, 2026-10-27: "Then create v1.5". v1.5 holds voice activation (`D15`) and whatever the `C4` review proposes for it; nothing else enters without its own `D<n>`. The GitHub milestones `v1.0` (closed) and `v1.5` (open) are the visible record. |
 | D17 | proposed | v1.5 | **Gate the URL scheme's destructive verbs.** `monitormenu://input/…`, `sleep` and `pip` run from any local process or web link with no confirmation (review C4 #1; FR7, D6 design). Options: an opt-in default (`urlActions`, off), a confirmation when the sender is not the app itself, or a per-install token; log the sender either way. Needs the owner's choice. |
 | D18 | proposed | v1.5 | **Check a cached capabilities string against the monitor cheaply**: one 32-byte fragment (about 0.2 s) compared with the cached prefix, so a tampered or firmware-changed entry is caught without the 2.3 s read (review C4 tamper test; NFR5 wording). |
-| D19 | proposed | v1.5 | **If Siri Classic runs the phrases, v1.5 ships with that documented and no shortcut files built** (`docs/plans/F4.md` T1). The setting's existence on this Mac is unverified. |
+| D19 | rejected 2026-10-29 | v1.5 | ~~**If Siri Classic runs the phrases, v1.5 ships with that documented and no shortcut files built** (`docs/plans/F4.md` T1). The setting's existence on this Mac is unverified.~~ Rejected: the owner will not switch Siri to Classic; F4 keeps T2 (shipped shortcut files, `D20`) and T3 (an Apple domain). Owner, 2026-10-29: "let's wait for t3 or t2. that's the call for f4 as voice is v.1.5". |
 | D20 | proposed | v1.5 | **An Install Shortcuts… menu item** with bundled signed `.shortcut` files wrapping the URL scheme, for Siri's "run <name>" path (`docs/plans/F4.md` T2). User-visible; needs the owner's yes. |
 | D21 | ratified | v1.0 | **The PiP list offers one entry per on-screen layout.** Values the firmware ignores (G3223D 0x01, 0x02) and values indistinguishable from another (0x2D = 0x29, 0x2E = 0x2A) are hidden from the menu and `monitorctl list`; `set pip 0xNN` still accepts any advertised value. Mapped at the desk 2026-10-29 (`docs/learnings/2026-10-29-pip-values.md`). Owner: "so for v1.0, let's hide that. and open it up as a more customizable option in v1.5". Built as `F1d`. |
 | D22 | proposed | v1.5 | **A customizable PiP list**: a setting to show every advertised value and to name or hide values per monitor, replacing the fixed per-vendor hidden set of `D21`. Owner's words 2026-10-29 above. Needs a plan. |
