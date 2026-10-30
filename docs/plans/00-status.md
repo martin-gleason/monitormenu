@@ -135,4 +135,4 @@ Every open row in the register. Owner is the row's Owner column where the table 
 
 ---
 
-32 open register rows.
+31 open register rows.
