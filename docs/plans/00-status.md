@@ -20,6 +20,7 @@ Named, never numbered (`D2`). **No source read here marks a milestone as the cur
 | MVP | 12 | C1, F1 |
 | v1.0 | 3 | C4, F1b, F1c, F1d, F2, F3 |
 | v1.5 | 8 | F4 |
+| — | 0 | C6 |
 
 ## Features and chores
 
@@ -29,6 +30,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 |---|---|---|---|---|---|---|---|
 | C1 | chore | done 2026-10-19 | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
 | C4 | chore | gate crossed 2026-10-27 ("run a polish pass to optimize for memory useage, code documentation, and speed of app | v1.0 | — | agent | `docs/plans/C4.md` | 6 planned |
+| C6 | chore | gate crossed 2026-10-30 ("let's build this for homebrew | — | — | — | `docs/plans/C6.md` | 4 planned |
 | F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass done 2026-10-23, fixed in `F1b` (`docs/plans/F1b.md`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
 | F1b | feature | built 2026-10-23; no gate (defect fixes from the second adversarial pass, `A2`, plus `A1`, whose decision criterion in the register was met by measurement) | v1.0 | — | agent | `docs/plans/F1b.md` | 5 planned |
 | F1c | feature | built 2026-10-23; no gate (FR9 defect `A4`, found by the owner's `O9` check) | v1.0 | — | agent | `docs/plans/F1c.md` | 1 planned |
@@ -43,14 +45,14 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
-| Decisions (`D`) | 23 | 14 | 0 | 9 |
+| Decisions (`D`) | 23 | 13 | 0 | 10 |
 | Risks (`RR`) | 9 | 5 | 0 | 4 |
-| Owner items (`O`) | 16 | 5 | 0 | 11 |
+| Owner items (`O`) | 17 | 6 | 0 | 11 |
 | Agent items (`A`) | 5 | 1 | 0 | 4 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
 | Mutations (`M`) | 14 | 0 | 0 | 14 |
-| Chores (`C`) | 6 | 2 | 0 | 4 |
-| Gates (`G`) | 6 | 0 | 3 | 3 |
+| Chores (`C`) | 6 | 1 | 1 | 4 |
+| Gates (`G`) | 7 | 0 | 4 | 3 |
 
 `Unknown` is not a third kind of open. It means the source document said nothing about status, so the page will not guess — the row is a question for the owner (`RR37`).
 
@@ -59,8 +61,8 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Status | Count |
 |---|---|---|
-| `D` | proposed | 14 |
-| `D` | ratified | 7 |
+| `D` | proposed | 13 |
+| `D` | ratified | 8 |
 | `D` | rejected | 1 |
 | `D` | superseded | 1 |
 | `RR` | closed | 1 |
@@ -68,16 +70,17 @@ Counted from the register itself. A register with no rows still gets a line.
 | `RR` | resolved | 3 |
 | `O` | closed | 11 |
 | `O` | held | 1 |
-| `O` | open | 4 |
+| `O` | open | 5 |
 | `A` | closed | 4 |
 | `A` | open | 1 |
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 14 |
 | `C` | done | 4 |
-| `C` | proposed | 2 |
+| `C` | proposed | 1 |
+| `C` | unknown | 1 |
 | `G` | done | 3 |
-| `G` | unknown | 3 |
+| `G` | unknown | 4 |
 
 ## Hooks
 
@@ -100,7 +103,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | Owner | ID | P | Status | Item |
 |---|---|---|---|---|
 | agent | C5 | P2 | proposed | Rename the shared defaults suite: it is the app's bundle id, which Foundation warns "does not make sense and will not wo… |
-| agent | C6 | P2 | proposed | Notarize and staple the bundle (review C4: spctl rejects it as Unnotarized Developer ID on any other Mac). Waits on O16.… |
+| agent | C6 | P1 | unknown | Homebrew distribution (D23): scripts/release.sh (signed .dmg, notarize and staple when O16 is done, cask SHA), Casks/mon… |
 | agent | RR1 | — | open | IOAVService is undocumented. A macOS update can change or remove it, and an app using it is not App Store eligible. |
 | agent | RR4 | — | open | A wrong VCP write can put a monitor into an odd state (factory reset, locked OSD). |
 | agent | RR8 | — | open | switchctl and the app share one I2C bus. Both transacting at the same instant corrupts one side's read (observed: switch… |
@@ -119,18 +122,19 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D18 | — | proposed | Check a cached capabilities string against the monitor cheaply: one 32-byte fragment (about 0.2 s) compared with the cac… |
 | owner | D20 | — | proposed | An Install Shortcuts… menu item with bundled signed .shortcut files wrapping the URL scheme, for Siri's "run <name>" pat… |
 | owner | D22 | — | proposed | A customizable PiP list: a setting to show every advertised value and to name or hide values per monitor, replacing the … |
-| owner | D23 | — | proposed | No Mac App Store build; ship by notarized direct distribution. Asked 2026-10-30 ("begin step by step to get this app in … |
 | owner | O6 | P2 | open | Ratify D1–D6. |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
 | owner | O15 | P2 | open | With each Smart HDR mode on in the Dell's OSD (Desktop, Movie HDR, Game HDR, DisplayHDR 400), run monitorctl get 0xF0 an… |
-| owner | O16 | P1 | open | Notarization needs your Apple ID app-specific password or an App Store Connect API key stored in the keychain (xcrun not… |
+| owner | O16 | P1 | open | Now blocks the first Homebrew release (C6-T4). Run once: xcrun notarytool store-credentials MonitorMenu with your Apple … |
+| owner | O17 | P2 | open | Optional, one-line Homebrew install: create a repository named homebrew-tap under martin-gleason and say so; the cask mo… |
 | unassigned | A5 | P2 | open | A four-day-old app process sat at 26 MB (peak 27) where a fresh one sits at 14 MB and stays there across URL actions, a … |
 | unassigned | G4 | — | unknown | F3 locked by the monitor |
 | unassigned | G5 | — | unknown | C4 polish pass |
 | unassigned | G6 | — | unknown | milestone boundary v1.0 → v1.5 |
+| unassigned | G7 | — | unknown | C6 Homebrew distribution |
 | unassigned | H5 | — | open | Every FR has a test or a named manual check with evidence |
 
 ---
 
-31 open register rows.
+32 open register rows.
