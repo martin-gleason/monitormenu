@@ -1,6 +1,8 @@
 # Created: 2026-10-30 09:50 -05:00 · Edited: 2026-10-30 09:50 -05:00
 # C6: Homebrew cask. Tap this repository, then `brew install --cask monitormenu`.
-# `scripts/release.sh --update-cask` writes version and sha256; do not edit those two lines by hand.
+# `scripts/release.sh --notarize --update-cask` writes version and sha256 (and the Edited stamp) from the
+# notarized image it just built; do not edit those lines by hand. A checksum is only right once the
+# release that carries the image exists; until the first release this file is ahead of the asset.
 cask "monitormenu" do
   version "1.0.1"
   sha256 "b6d71f10e3437fa5378f3bd6b5fc9b3cd9be423c12fe48974cabbb587614da41"

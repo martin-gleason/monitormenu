@@ -19,8 +19,7 @@ Named, never numbered (`D2`). **No source read here marks a milestone as the cur
 |---|---|---|
 | MVP | 12 | C1, F1 |
 | v1.0 | 3 | C4, F1b, F1c, F1d, F2, F3 |
-| v1.5 | 8 | F4 |
-| — | 0 | C6 |
+| v1.5 | 8 | C6, F4 |
 
 ## Features and chores
 
@@ -30,7 +29,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 |---|---|---|---|---|---|---|---|
 | C1 | chore | done 2026-10-19 | MVP | P0 | agent | `docs/plans/C1.md` | 6 planned |
 | C4 | chore | gate crossed 2026-10-27 ("run a polish pass to optimize for memory useage, code documentation, and speed of app | v1.0 | — | agent | `docs/plans/C4.md` | 6 planned |
-| C6 | chore | gate crossed 2026-10-30 ("let's build this for homebrew | — | — | — | `docs/plans/C6.md` | 4 planned |
+| C6 | chore | gate crossed 2026-10-30 ("let's build this for homebrew | v1.5 | — | agent | `docs/plans/C6.md` | 4 planned |
 | F1 | feature | built 2026-10-19; adversarial review done, all 19 findings fixed or accepted (`docs/reviews/F1.md`); live checks that need a person at the desk remain open (`O9`, `O12`); second review pass done 2026-10-23, fixed in `F1b` (`docs/plans/F1b.md`) | MVP | — | agent | `docs/plans/F1.md` | 6 planned |
 | F1b | feature | built 2026-10-23; no gate (defect fixes from the second adversarial pass, `A2`, plus `A1`, whose decision criterion in the register was met by measurement) | v1.0 | — | agent | `docs/plans/F1b.md` | 5 planned |
 | F1c | feature | built 2026-10-23; no gate (FR9 defect `A4`, found by the owner's `O9` check) | v1.0 | — | agent | `docs/plans/F1c.md` | 1 planned |
@@ -51,7 +50,7 @@ Counted from the register itself. A register with no rows still gets a line.
 | Agent items (`A`) | 5 | 1 | 0 | 4 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
 | Mutations (`M`) | 14 | 0 | 0 | 14 |
-| Chores (`C`) | 6 | 1 | 1 | 4 |
+| Chores (`C`) | 6 | 1 | 0 | 5 |
 | Gates (`G`) | 7 | 0 | 4 | 3 |
 
 `Unknown` is not a third kind of open. It means the source document said nothing about status, so the page will not guess — the row is a question for the owner (`RR37`).
@@ -76,9 +75,9 @@ Counted from the register itself. A register with no rows still gets a line.
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 14 |
+| `C` | built | 1 |
 | `C` | done | 4 |
 | `C` | proposed | 1 |
-| `C` | unknown | 1 |
 | `G` | done | 3 |
 | `G` | unknown | 4 |
 
@@ -103,7 +102,6 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | Owner | ID | P | Status | Item |
 |---|---|---|---|---|
 | agent | C5 | P2 | proposed | Rename the shared defaults suite: it is the app's bundle id, which Foundation warns "does not make sense and will not wo… |
-| agent | C6 | P1 | unknown | Homebrew distribution (D23): scripts/release.sh (signed .dmg, notarize and staple when O16 is done, cask SHA), Casks/mon… |
 | agent | RR1 | — | open | IOAVService is undocumented. A macOS update can change or remove it, and an app using it is not App Store eligible. |
 | agent | RR4 | — | open | A wrong VCP write can put a monitor into an odd state (factory reset, locked OSD). |
 | agent | RR8 | — | open | switchctl and the app share one I2C bus. Both transacting at the same instant corrupts one side's read (observed: switch… |
