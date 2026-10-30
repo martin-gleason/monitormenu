@@ -19,7 +19,7 @@ Named, never numbered (`D2`). **No source read here marks a milestone as the cur
 |---|---|---|
 | MVP | 12 | C1, F1 |
 | v1.0 | 3 | C4, F1b, F1c, F1d, F2, F3 |
-| v1.5 | 7 | F4 |
+| v1.5 | 8 | F4 |
 
 ## Features and chores
 
@@ -43,7 +43,7 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
-| Decisions (`D`) | 22 | 13 | 0 | 9 |
+| Decisions (`D`) | 23 | 14 | 0 | 9 |
 | Risks (`RR`) | 9 | 5 | 0 | 4 |
 | Owner items (`O`) | 16 | 5 | 0 | 11 |
 | Agent items (`A`) | 5 | 1 | 0 | 4 |
@@ -59,7 +59,7 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Status | Count |
 |---|---|---|
-| `D` | proposed | 13 |
+| `D` | proposed | 14 |
 | `D` | ratified | 7 |
 | `D` | rejected | 1 |
 | `D` | superseded | 1 |
@@ -119,6 +119,7 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D18 | — | proposed | Check a cached capabilities string against the monitor cheaply: one 32-byte fragment (about 0.2 s) compared with the cac… |
 | owner | D20 | — | proposed | An Install Shortcuts… menu item with bundled signed .shortcut files wrapping the URL scheme, for Siri's "run <name>" pat… |
 | owner | D22 | — | proposed | A customizable PiP list: a setting to show every advertised value and to name or hide values per monitor, replacing the … |
+| owner | D23 | — | proposed | No Mac App Store build; ship by notarized direct distribution. Asked 2026-10-30 ("begin step by step to get this app in … |
 | owner | O6 | P2 | open | Ratify D1–D6. |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
@@ -132,4 +133,4 @@ Every open row in the register. Owner is the row's Owner column where the table 
 
 ---
 
-30 open register rows.
+31 open register rows.
