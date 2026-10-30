@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-29 12:25 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-30 09:20 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -36,12 +36,13 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | D20 | proposed | v1.5 | **An Install Shortcuts… menu item** with bundled signed `.shortcut` files wrapping the URL scheme, for Siri's "run <name>" path (`docs/plans/F4.md` T2). User-visible; needs the owner's yes. |
 | D21 | ratified | v1.0 | **The PiP list offers one entry per on-screen layout.** Values the firmware ignores (G3223D 0x01, 0x02) and values indistinguishable from another (0x2D = 0x29, 0x2E = 0x2A) are hidden from the menu and `monitorctl list`; `set pip 0xNN` still accepts any advertised value. Mapped at the desk 2026-10-29 (`docs/learnings/2026-10-29-pip-values.md`). Owner: "so for v1.0, let's hide that. and open it up as a more customizable option in v1.5". Built as `F1d`. |
 | D22 | proposed | v1.5 | **A customizable PiP list**: a setting to show every advertised value and to name or hide values per monitor, replacing the fixed per-vendor hidden set of `D21`. Owner's words 2026-10-29 above. Needs a plan. |
+| D23 | proposed | v1.5 | **No Mac App Store build; ship by notarized direct distribution.** Asked 2026-10-30 ("begin step by step to get this app in the apple store"). Tested the same day: the 1.0.1 bundle re-signed with `com.apple.security.app-sandbox` finds 0 monitors where the installed build finds 1, and `IOAVService` is not public API (Guidelines 2.4.5(i), 2.5.1). Evidence in `docs/learnings/2026-10-30-app-store-feasibility.md`. Instead: notarize and staple (`C6`), a `.dmg` on GitHub Releases, a Homebrew cask. Keeps the spec's out-of-scope line; needs the owner's yes because it answers his request with a different route. |
 
 ## Risks (RR)
 
 | ID | Risk | Status | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|---|---|
-| RR1 | `IOAVService` is undocumented. A macOS update can change or remove it, and an app using it is not App Store eligible. | open | Medium over years | App stops working after an OS update | Transport isolated behind one protocol in `SwitchCore`; live check on this Mac; App Store already out of scope. | agent |
+| RR1 | `IOAVService` is undocumented. A macOS update can change or remove it, and an app using it is not App Store eligible. | open | Medium over years | App stops working after an OS update | Transport isolated behind one protocol in `SwitchCore`; live check on this Mac; App Store out of scope, and verified 2026-10-30: under the App Sandbox the app finds 0 monitors (`docs/learnings/2026-10-30-app-store-feasibility.md`, `D23`). | agent |
 | RR2 | Single-value DDC reads and writes through BetterDisplay failed on this Mac while the full capabilities scan succeeded. Cause unknown; may indicate a flaky I2C link on HDMI 1. | resolved 2026-10-19 — the link is fine: `switchctl probe` 100/100 reads, mean 117 ms; 30/30 cold-process reads of 0xDF correct; m1ddc 1.2.0 also misreads this monitor, so the fault was in those tools' timing, not the cable | Observed 2026-10-19 | Switches silently fail or need retries | F1-T1 measures raw I2C reliability first and adds bounded retries; result recorded in the plan. | agent |
 | RR3 | After switching the monitor to another input, the Mac may lose the DDC channel (some monitors stop answering I2C on an inactive input). The Mac then cannot switch back. | open | Unknown for the G3223D | Owner must use the monitor's buttons or the other source to return | Tested in F1-T2 on the G3223D and documented. A "switch back after N seconds" option is a future `D<n>` if needed. | human |
 | RR4 | A wrong VCP write can put a monitor into an odd state (factory reset, locked OSD). | open | Low with D3 | Monitor needs manual recovery | D3 whitelist + M1 mutation test. | agent |
