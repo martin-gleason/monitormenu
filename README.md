@@ -1,6 +1,6 @@
 # MonitorMenu
 
-Created: 2026-10-19 19:22 -05:00 · Edited: 2026-10-30 09:53 -05:00
+Created: 2026-10-19 19:22 -05:00 · Edited: 2026-10-30 10:10 -05:00
 
 [![ci](https://github.com/martin-gleason/monitormenu/actions/workflows/ci.yml/badge.svg)](https://github.com/martin-gleason/monitormenu/actions/workflows/ci.yml)
 
@@ -18,7 +18,9 @@ brew trust martin-gleason/monitormenu
 brew install --cask monitormenu
 ```
 
-The `trust` line is Homebrew 7's rule for any tap outside the Homebrew organisation; it is asked once. That puts `MonitorMenu.app` in `/Applications` and `monitorctl` on your PATH. `brew upgrade --cask monitormenu` moves to the next version; `brew uninstall --cask monitormenu` quits the app and removes both. The app is Developer ID signed and notarized by Apple, so it opens without a Gatekeeper warning.
+The `trust` line is Homebrew 7's rule for any tap outside the Homebrew organisation; it is asked once. That puts `MonitorMenu.app` in `/Applications` and `monitorctl` on your PATH. `brew upgrade --cask monitormenu` moves to the next version; `brew uninstall --cask monitormenu` quits the app and removes both.
+
+**First release pending.** The Homebrew and disk-image routes work once `v1.0.1` appears under Releases, which waits on Apple's notarization of the build. Until then, build from source.
 
 Without Homebrew: download `MonitorMenu-<version>.dmg` from [Releases](https://github.com/martin-gleason/monitormenu/releases), open it and drag the app to Applications.
 
