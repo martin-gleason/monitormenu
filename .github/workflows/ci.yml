@@ -1,4 +1,4 @@
-# Created: 2026-10-19 20:32 -05:00 · Edited: 2026-10-30 10:10 -05:00
+# Created: 2026-10-19 20:32 -05:00 · Edited: 2026-10-30 10:17 -05:00
 # C1-T6 — the test gate (H1) and the floor (H2) in CI. The status-page check needs the upstream
 # generator and stays local (pre-commit). The ruleset on main requires this job's "test" check.
 name: ci
@@ -42,6 +42,7 @@ jobs:
       - name: brew audit
         run: |
           brew tap-new --no-git ci/local
+          mkdir -p "$(brew --repository ci/local)/Casks"   # tap-new makes Formula/ only
           cp Casks/monitormenu.rb "$(brew --repository ci/local)/Casks/"
           brew trust ci/local || true   # Homebrew 7; older versions have no `trust` and load the tap anyway
           brew audit --cask --strict ci/local/monitormenu
