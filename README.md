@@ -1,6 +1,6 @@
 # MonitorMenu
 
-Created: 2026-10-19 19:22 -05:00 · Edited: 2026-10-29 12:25 -05:00
+Created: 2026-10-19 19:22 -05:00 · Edited: 2026-10-30 09:53 -05:00
 
 [![ci](https://github.com/martin-gleason/monitormenu/actions/workflows/ci.yml/badge.svg)](https://github.com/martin-gleason/monitormenu/actions/workflows/ci.yml)
 
@@ -10,8 +10,22 @@ A native Mac menu bar app that talks DDC/CI to your external monitors directly: 
 
 ## Install
 
+With [Homebrew](https://brew.sh):
+
 ```
-scripts/build-app.sh --install     # builds, signs with your Developer ID, installs ~/Applications/MonitorMenu.app, links monitorctl
+brew tap martin-gleason/monitormenu https://github.com/martin-gleason/monitormenu
+brew trust martin-gleason/monitormenu
+brew install --cask monitormenu
+```
+
+The `trust` line is Homebrew 7's rule for any tap outside the Homebrew organisation; it is asked once. That puts `MonitorMenu.app` in `/Applications` and `monitorctl` on your PATH. `brew upgrade --cask monitormenu` moves to the next version; `brew uninstall --cask monitormenu` quits the app and removes both. The app is Developer ID signed and notarized by Apple, so it opens without a Gatekeeper warning.
+
+Without Homebrew: download `MonitorMenu-<version>.dmg` from [Releases](https://github.com/martin-gleason/monitormenu/releases), open it and drag the app to Applications.
+
+From source (needs Xcode and a Developer ID certificate):
+
+```
+scripts/build-app.sh --install     # builds, signs, installs ~/Applications/MonitorMenu.app, links monitorctl
 open -a MonitorMenu
 ```
 
@@ -40,4 +54,4 @@ MonitorMenu only offers and sends what your monitor advertises in its DDC capabi
 
 ## Development
 
-`swift test` runs the offline suite. `MONITORMENU_LIVE=1 swift test` adds a read-only check against the attached monitor. `scripts/mutate.sh M1` proves a test can fail. The app logs discovery and refresh timings and every failed action: `/usr/bin/log show --last 10m --predicate 'subsystem == "dev.marty.MonitorMenu"' --info --style compact` (the full path matters: zsh has its own `log` builtin). See `docs/specs/SPEC.md` for the contract and `docs/plans/` for the build record.
+`scripts/release.sh --notarize --update-cask` packages a release: the signed, notarized `.dmg` under `dist/` and the cask's version and checksum; the procedure is in `docs/plans/C6.md`. `swift test` runs the offline suite. `MONITORMENU_LIVE=1 swift test` adds a read-only check against the attached monitor. `scripts/mutate.sh M1` proves a test can fail. The app logs discovery and refresh timings and every failed action: `/usr/bin/log show --last 10m --predicate 'subsystem == "dev.marty.MonitorMenu"' --info --style compact` (the full path matters: zsh has its own `log` builtin). See `docs/specs/SPEC.md` for the contract and `docs/plans/` for the build record.

@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-30 09:20 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-30 09:53 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -36,7 +36,7 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | D20 | proposed | v1.5 | **An Install Shortcuts… menu item** with bundled signed `.shortcut` files wrapping the URL scheme, for Siri's "run <name>" path (`docs/plans/F4.md` T2). User-visible; needs the owner's yes. |
 | D21 | ratified | v1.0 | **The PiP list offers one entry per on-screen layout.** Values the firmware ignores (G3223D 0x01, 0x02) and values indistinguishable from another (0x2D = 0x29, 0x2E = 0x2A) are hidden from the menu and `monitorctl list`; `set pip 0xNN` still accepts any advertised value. Mapped at the desk 2026-10-29 (`docs/learnings/2026-10-29-pip-values.md`). Owner: "so for v1.0, let's hide that. and open it up as a more customizable option in v1.5". Built as `F1d`. |
 | D22 | proposed | v1.5 | **A customizable PiP list**: a setting to show every advertised value and to name or hide values per monitor, replacing the fixed per-vendor hidden set of `D21`. Owner's words 2026-10-29 above. Needs a plan. |
-| D23 | proposed | v1.5 | **No Mac App Store build; ship by notarized direct distribution.** Asked 2026-10-30 ("begin step by step to get this app in the apple store"). Tested the same day: the 1.0.1 bundle re-signed with `com.apple.security.app-sandbox` finds 0 monitors where the installed build finds 1, and `IOAVService` is not public API (Guidelines 2.4.5(i), 2.5.1). Evidence in `docs/learnings/2026-10-30-app-store-feasibility.md`. Instead: notarize and staple (`C6`), a `.dmg` on GitHub Releases, a Homebrew cask. Keeps the spec's out-of-scope line; needs the owner's yes because it answers his request with a different route. |
+| D23 | ratified 2026-10-30 | v1.5 | **No Mac App Store build; ship by notarized direct distribution.** Asked 2026-10-30 ("begin step by step to get this app in the apple store"). Tested the same day: the 1.0.1 bundle re-signed with `com.apple.security.app-sandbox` finds 0 monitors where the installed build finds 1, and `IOAVService` is not public API (Guidelines 2.4.5(i), 2.5.1). Evidence in `docs/learnings/2026-10-30-app-store-feasibility.md`. Instead: notarize and staple (`C6`), a `.dmg` on GitHub Releases, a Homebrew cask. Keeps the spec's out-of-scope line; Ratified by the owner's next instruction: "let's build this for homebrew. and update the github page to reflect you can get it with homebrew." Built as `C6`. |
 
 ## Risks (RR)
 
@@ -74,7 +74,8 @@ Outstanding items only the owner can close.
 | O13 | Gate F2 (name your monitors, `docs/plans/F2.md`) and ratify D13, which also opens milestone v1.0 and adds FR10 to the spec (paste it in, or tell the agent to). | P1 | closed 2026-10-21 — "f2 and d13 are good to go"; FR10 pasted into the spec by the agent on that instruction |
 | O14 | In the Shortcuts app, click All Actions, then the Apps list: look for **MonitorMenu** (six actions) and **IntentProbe** (one action, "Probe Monitor"). Report which of the two you see. Both are installed, signed with your Developer ID and running. | P0 | closed 2026-10-22 — the owner opened a new shortcut and searched the action library: both apps list their actions. |
 | O15 | With each Smart HDR mode on in the Dell's OSD (Desktop, Movie HDR, Game HDR, DisplayHDR 400), run `monitorctl get 0xF0` and paste the four values. Only Desktop (`0x34`) is known; the lock table in `VCP.lockingPresets` needs the others. Then, with it still on, open the menu (sliders greyed, the line under them), run `monitorctl set brightness 50` (refused), and `open "monitormenu://brightness/50"` right after toggling Smart HDR in the OSD: say whether the app answered before its next refresh (review F3 #2). | P2 | open |
-| O16 | Notarization needs your Apple ID app-specific password or an App Store Connect API key stored in the keychain (`xcrun notarytool store-credentials`). Without it the app runs on this Mac but Gatekeeper refuses it on any other (`spctl`: rejected, Unnotarized Developer ID). Say if you want it (`C6`). Also: `codesign` has been stuck on a keychain prompt since 08:57 on 2026-10-27; click Always Allow, then `scripts/build-app.sh --install` so the reviewed F3 and C4 code replaces the 08:53 build. | P1 | open |
+| O16 | **Now blocks the first Homebrew release (`C6`-T4).** Run once: `xcrun notarytool store-credentials MonitorMenu` with your Apple ID, team `KH6NBQRZBY` and an app-specific password (appleid.apple.com → Sign-In and Security → App-Specific Passwords), or an App Store Connect API key. Without it the app runs on this Mac but Gatekeeper refuses it on any other (`spctl`: rejected, Unnotarized Developer ID). Say if you want it (`C6`). Also: `codesign` has been stuck on a keychain prompt since 08:57 on 2026-10-27; click Always Allow, then `scripts/build-app.sh --install` so the reviewed F3 and C4 code replaces the 08:53 build. | P1 | open |
+| O17 | Optional, one-line Homebrew install: create a repository named `homebrew-tap` under `martin-gleason` and say so; the cask moves there and the README's `tap` line goes away (`brew trust martin-gleason/tap`, then `brew install --cask martin-gleason/tap/monitormenu`; Homebrew 7 asks for the trust step for every non-Homebrew tap). Until then the tap is this repository by URL (`C6`). | P2 | open |
 
 ## Agent items (A)
 
@@ -97,7 +98,7 @@ Outstanding items only the agent can close: defects in its own work, findings it
 | C3 | Find what puts the G3223D into its locked state (RR6) and what clears it. **Found 2026-10-23:** the monitor's own Smart HDR setting. With Smart HDR on (Desktop, Movie HDR, Game HDR, DisplayHDR 400) the G3223D greys out Brightness and Contrast in its OSD, reports preset `0xF0` = 0x34 over DDC, accepts brightness writes and ignores them, and advertises HDR to macOS (AppKit potential EDR headroom 4.18). The owner set Smart HDR to Off in the OSD: the lock cleared at once, brightness 56 and contrast 75 write and read back, and macOS now sees headroom 1.0. The monitor turns Smart HDR on by itself when the source sends HDR; both episodes followed link retrains (BetterDisplay mode changes on 10-19, a PiP cycle and an unexplained display-stack restart on 10-23). Left over: the input code still answers `1B 1B 1B 1B` (USB-C) while the Mac is on HDMI 1; watch whether a sleep/wake clears it. Code follow-up proposed as `D14`. | P1 | done 2026-10-23 |
 | C4 | Polish pass: capabilities cache (CLI 2.8 s → under 0.5 s), memory and startup measured and trimmed, file stamps and stale docs, the voice seam, Apple-guidelines check. Closes v1.0. | P1 | done 2026-10-27 — reviewed (`docs/reviews/C4.md`); CLI 2.8 s → 0.12 s; footprint 14 MB | agent | `docs/plans/C4.md` |
 | C5 | Rename the shared defaults suite: it is the app's bundle id, which Foundation warns "does not make sense and will not work" (review C4 #5); one-time migration of `monitorNames` and `capabilitiesCache`. | P2 | proposed, v1.5 | agent | — |
-| C6 | Notarize and staple the bundle (review C4: `spctl` rejects it as Unnotarized Developer ID on any other Mac). Waits on `O16`. | P2 | proposed, v1.5 | agent | — |
+| C6 | Homebrew distribution (`D23`): `scripts/release.sh` (signed `.dmg`, notarize and staple when `O16` is done, cask SHA), `Casks/monitormenu.rb` in this repository, README install section. Review C4 origin: `spctl` rejects the bundle as Unnotarized Developer ID on any other Mac. | P1 | gate crossed 2026-10-30; built 2026-10-30; first published release waits on `O16` | agent | `docs/plans/C6.md` |
 
 ## Gates (G)
 
@@ -111,6 +112,7 @@ A gate is an **event**, not a place. It is recorded here so it exists outside th
 | G4 | F3 locked by the monitor | crossed | 2026-10-27 | 2026-10-27 | "d14 is ratified" |
 | G5 | C4 polish pass | crossed | 2026-10-27 | 2026-10-27 | "run a polish pass to optimize for memory useage, code documentation, and speed of app. keep a framework for voice activation when the new siri allows it" |
 | G6 | milestone boundary v1.0 → v1.5 | crossed | — | 2026-10-27 | "Then create v1.5" |
+| G7 | C6 Homebrew distribution | crossed | 2026-10-30 | 2026-10-30 | "let's build this for homebrew. and update the github page to reflect you can get it with homebrew" |
 
 ## Hooks (H)
 
