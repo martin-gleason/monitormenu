@@ -1,6 +1,6 @@
 # Register — MonitorMenu
 
-Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-30 10:10 -05:00
+Created: 2026-10-19 17:34 -05:00 · Edited: 2026-10-30 11:58 -05:00
 
 Every register for this project, one `##` per register. This is the "where are we" read.
 
@@ -36,7 +36,7 @@ ADR-style: numbered, dated, **immutable once ratified**. **One intake path.** An
 | D20 | proposed | v1.5 | **An Install Shortcuts… menu item** with bundled signed `.shortcut` files wrapping the URL scheme, for Siri's "run <name>" path (`docs/plans/F4.md` T2). User-visible; needs the owner's yes. |
 | D21 | ratified | v1.0 | **The PiP list offers one entry per on-screen layout.** Values the firmware ignores (G3223D 0x01, 0x02) and values indistinguishable from another (0x2D = 0x29, 0x2E = 0x2A) are hidden from the menu and `monitorctl list`; `set pip 0xNN` still accepts any advertised value. Mapped at the desk 2026-10-29 (`docs/learnings/2026-10-29-pip-values.md`). Owner: "so for v1.0, let's hide that. and open it up as a more customizable option in v1.5". Built as `F1d`. |
 | D22 | proposed | v1.5 | **A customizable PiP list**: a setting to show every advertised value and to name or hide values per monitor, replacing the fixed per-vendor hidden set of `D21`. Owner's words 2026-10-29 above. Needs a plan. |
-| D23 | ratified 2026-10-30 (by implication) | v1.5 | **No Mac App Store build; ship by notarized direct distribution.** Asked 2026-10-30 ("begin step by step to get this app in the apple store"). Tested the same day: the 1.0.1 bundle re-signed with `com.apple.security.app-sandbox` finds 0 monitors where the installed build finds 1, and `IOAVService` is not public API (Guidelines 2.4.5(i), 2.5.1). Evidence in `docs/learnings/2026-10-30-app-store-feasibility.md`. Instead: notarize and staple (`C6`), a `.dmg` on GitHub Releases, a Homebrew cask. Keeps the spec's out-of-scope line; Ratified by implication of the owner's next instruction, "let's build this for homebrew. and update the github page to reflect you can get it with homebrew"; he did not say no to the store in words, so a one-word confirmation is asked for (review C6 #10). Built as `C6`. |
+| D23 | ratified 2026-10-30 | v1.5 | **No Mac App Store build; ship by notarized direct distribution.** Asked 2026-10-30 ("begin step by step to get this app in the apple store"). Tested the same day: the 1.0.1 bundle re-signed with `com.apple.security.app-sandbox` finds 0 monitors where the installed build finds 1, and `IOAVService` is not public API (Guidelines 2.4.5(i), 2.5.1). Evidence in `docs/learnings/2026-10-30-app-store-feasibility.md`. Instead: notarize and staple (`C6`), a `.dmg` on GitHub Releases, a Homebrew cask. Keeps the spec's out-of-scope line. First read from the owner's next instruction, "let's build this for homebrew. and update the github page to reflect you can get it with homebrew"; confirmed in words the same day: "homebrew is our way to install the app over the app store." Built as `C6`. |
 
 ## Risks (RR)
 
