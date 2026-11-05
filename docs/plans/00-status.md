@@ -36,7 +36,7 @@ Status is what the unit's own plan header declares. What has landed in git is de
 | F1d | feature | reviewed 2026-10-29 (`docs/reviews/F1d.md`), fixes applied; no gate (closes `O5` and `RR5` under FR4; the one user-visible choice, hiding ignored and duplicate values, is `D21`, ratified by the owner at the desk: "so for v1.0, let's hide that | v1.0 | — | agent | `docs/plans/F1d.md` | 4 planned |
 | F2 | feature | built 2026-10-21 (gate crossed 2026-10-21); adversarially reviewed 2026-10-22, one major and nine minors, all fixed but one accepted (`docs/reviews/F2.md`) | v1.0 | — | agent | `docs/plans/F2.md` | 3 planned |
 | F3 | feature | gate crossed 2026-10-27 ("d14 is ratified"); built 2026-10-27; adversarially reviewed the same day, one major and six minors, all fixed but the two that cannot be (`docs/reviews/F3.md`) | v1.0 | — | agent | `docs/plans/F3.md` | 2 planned |
-| F4 | feature | gate decided 2026-10-29: T1 (Siri Classic) struck by the owner (`D19` rejected); T2 waits for the owner's go to build, T3 waits for Apple | v1.5 | — | agent (T1 and T4 are the owner's: only a person can speak to Siri) | `docs/plans/F4.md` | 4 planned |
+| F4 | feature | gate decided 2026-10-29: T1 (Siri Classic) struck by the owner (`D19` rejected); T2's menu item approved 2026-11-05 (`D20`), not yet built, and it must first settle how a bundled file works with the token (`D17`); T3 waits for Apple | v1.5 | — | agent (T1 and T4 are the owner's: only a person can speak to Siri) | `docs/plans/F4.md` | 4 planned |
 
 ## Registers
 
@@ -44,7 +44,7 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Rows | Open | Unknown | Closed |
 |---|---|---|---|---|
-| Decisions (`D`) | 23 | 13 | 0 | 10 |
+| Decisions (`D`) | 23 | 9 | 0 | 14 |
 | Risks (`RR`) | 9 | 5 | 0 | 4 |
 | Owner items (`O`) | 17 | 6 | 0 | 11 |
 | Agent items (`A`) | 5 | 1 | 0 | 4 |
@@ -60,8 +60,8 @@ Counted from the register itself. A register with no rows still gets a line.
 
 | Register | Status | Count |
 |---|---|---|
-| `D` | proposed | 13 |
-| `D` | ratified | 8 |
+| `D` | proposed | 9 |
+| `D` | ratified | 12 |
 | `D` | rejected | 1 |
 | `D` | superseded | 1 |
 | `RR` | closed | 1 |
@@ -116,10 +116,6 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | D9 | — | proposed | Built as written; the fallback was not needed — appintentsmetadataprocessor runs from scripts/build-app.sh on the .swift… |
 | owner | D10 | — | proposed | Monitor neutral (NFR8). The HP Omen the owner expects within 90 days of 2026-10-19 is the second test monitor; until it … |
 | owner | D11 | — | proposed | switchctl has no raw set <code> <value>; writes are limited to the spec's controls (input, brightness, contrast, power, … |
-| owner | D17 | — | proposed | Gate the URL scheme's destructive verbs. monitormenu://input/…, sleep and pip run from any local process or web link wit… |
-| owner | D18 | — | proposed | Check a cached capabilities string against the monitor cheaply: one 32-byte fragment (about 0.2 s) compared with the cac… |
-| owner | D20 | — | proposed | An Install Shortcuts… menu item with bundled signed .shortcut files wrapping the URL scheme, for Siri's "run <name>" pat… |
-| owner | D22 | — | proposed | A customizable PiP list: a setting to show every advertised value and to name or hide values per monitor, replacing the … |
 | owner | O6 | P2 | open | Ratify D1–D6. |
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
@@ -135,4 +131,4 @@ Every open row in the register. Owner is the row's Owner column where the table 
 
 ---
 
-31 open register rows.
+27 open register rows.
