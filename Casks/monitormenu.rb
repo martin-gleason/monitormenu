@@ -1,11 +1,11 @@
-# Created: 2026-10-30 09:50 -05:00 · Edited: 2026-10-30 09:50 -05:00
+# Created: 2026-10-30 09:50 -05:00 · Edited: 2026-11-06 10:07 -06:00
 # C6: Homebrew cask. Tap this repository, then `brew install --cask monitormenu`.
 # `scripts/release.sh --notarize --update-cask` writes version and sha256 (and the Edited stamp) from the
 # notarized image it just built; do not edit those lines by hand. A checksum is only right once the
 # release that carries the image exists; until the first release this file is ahead of the asset.
 cask "monitormenu" do
   version "1.0.1"
-  sha256 "b6d71f10e3437fa5378f3bd6b5fc9b3cd9be423c12fe48974cabbb587614da41"
+  sha256 "37a6a2835089e65a6ef1a59228d82fc7f3156eb03dfda7aa49cf859e432d4b39"
 
   url "https://github.com/martin-gleason/monitormenu/releases/download/v#{version}/MonitorMenu-#{version}.dmg"
   name "MonitorMenu"

@@ -46,7 +46,7 @@ Counted from the register itself. A register with no rows still gets a line.
 |---|---|---|---|---|
 | Decisions (`D`) | 23 | 9 | 0 | 14 |
 | Risks (`RR`) | 9 | 5 | 0 | 4 |
-| Owner items (`O`) | 17 | 6 | 0 | 11 |
+| Owner items (`O`) | 17 | 5 | 0 | 12 |
 | Agent items (`A`) | 5 | 1 | 0 | 4 |
 | Hooks (`H`) | 7 | 1 | 0 | 6 |
 | Mutations (`M`) | 14 | 0 | 0 | 14 |
@@ -68,15 +68,15 @@ Counted from the register itself. A register with no rows still gets a line.
 | `RR` | open | 5 |
 | `RR` | resolved | 3 |
 | `O` | closed | 11 |
+| `O` | done | 1 |
 | `O` | held | 1 |
-| `O` | open | 5 |
+| `O` | open | 4 |
 | `A` | closed | 4 |
 | `A` | open | 1 |
 | `H` | built | 6 |
 | `H` | open | 1 |
 | `M` | killed | 14 |
-| `C` | built | 1 |
-| `C` | done | 4 |
+| `C` | done | 5 |
 | `C` | proposed | 1 |
 | `G` | done | 3 |
 | `G` | unknown | 4 |
@@ -120,7 +120,6 @@ Every open row in the register. Owner is the row's Owner column where the table 
 | owner | O10 | P2 | open | When the HP Omen arrives, connect both monitors and run the live check; paste switchctl list. Closes two-display matchin… |
 | owner | O12 | P1 | held | First live input switch, with you at the desk: connect a second source to HDMI 2 (or know where the monitor's input butt… |
 | owner | O15 | P2 | open | With each Smart HDR mode on in the Dell's OSD (Desktop, Movie HDR, Game HDR, DisplayHDR 400), run monitorctl get 0xF0 an… |
-| owner | O16 | P1 | open | Now blocks the first Homebrew release (C6-T4). Run once: xcrun notarytool store-credentials MonitorMenu with your Apple … |
 | owner | O17 | P2 | open | Optional, one-line Homebrew install: create a repository named homebrew-tap under martin-gleason and say so; the cask mo… |
 | unassigned | A5 | P2 | open | A four-day-old app process sat at 26 MB (peak 27) where a fresh one sits at 14 MB and stays there across URL actions, a … |
 | unassigned | G4 | — | unknown | F3 locked by the monitor |
@@ -131,4 +130,4 @@ Every open row in the register. Owner is the row's Owner column where the table 
 
 ---
 
-27 open register rows.
+26 open register rows.
