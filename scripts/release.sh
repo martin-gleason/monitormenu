@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Created: 2026-10-30 09:50 -05:00 · Edited: 2026-10-30 10:10 -05:00
+# Created: 2026-10-30 09:50 -05:00 · Edited: 2026-11-06 09:48 -06:00
 # C6: package a release. Builds and signs the app (scripts/build-app.sh), wraps it in a compressed
 # disk image with an Applications link, signs the image, prints its SHA-256 and the commit it came from.
 #   scripts/release.sh --notarize [--update-cask]   -> dist/MonitorMenu-<version>.dmg, notarized and
@@ -55,13 +55,14 @@ if [[ -z "$IDENTITY" ]]; then echo "error: no Developer ID Application identity 
 
 # notarytool exits 0 on a submission that was processed, whatever Apple's verdict. Read the verdict.
 notarize() {  # $1 = path
-  local out id status
+  # Not `status`: zsh reserves it as a read-only alias of $?, and assigning it aborts the script.
+  local out id verdict
   out=$(xcrun notarytool submit "$1" --keychain-profile "$PROFILE" --wait 2>&1) || { echo "$out" >&2; return 1; }
   echo "$out" | sed 's/^/  /'
   id=$(echo "$out" | awk '/^ *id:/ && !seen {print $2; seen=1}')
-  status=$(echo "$out" | awk '/^ *status:/ {s=$2} END {print s}')
-  if [[ "$status" != "Accepted" ]]; then
-    echo "error: notarization of $1 ended '$status'. Apple's log:" >&2
+  verdict=$(echo "$out" | awk '/^ *status:/ {s=$2} END {print s}')
+  if [[ "$verdict" != "Accepted" ]]; then
+    echo "error: notarization of $1 ended '$verdict'. Apple's log:" >&2
     xcrun notarytool log "$id" --keychain-profile "$PROFILE" >&2 || true
     return 1
   fi
